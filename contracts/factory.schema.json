@@ -1,0 +1,1544 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://software-factory.local/contracts/v1",
+  "title": "FactoryContract",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/Budget"
+    },
+    {
+      "$ref": "#/$defs/Acceptance"
+    },
+    {
+      "$ref": "#/$defs/Delegation"
+    },
+    {
+      "$ref": "#/$defs/MissionRevision"
+    },
+    {
+      "$ref": "#/$defs/MissionDraft"
+    },
+    {
+      "$ref": "#/$defs/WorkItem"
+    },
+    {
+      "$ref": "#/$defs/PlanProposal"
+    },
+    {
+      "$ref": "#/$defs/Waiting"
+    },
+    {
+      "$ref": "#/$defs/Usage"
+    },
+    {
+      "$ref": "#/$defs/Attempt"
+    },
+    {
+      "$ref": "#/$defs/AgentClaim"
+    },
+    {
+      "$ref": "#/$defs/Handoff"
+    },
+    {
+      "$ref": "#/$defs/RunnerFact"
+    },
+    {
+      "$ref": "#/$defs/EvidenceReceipt"
+    },
+    {
+      "$ref": "#/$defs/AuthorityGrant"
+    },
+    {
+      "$ref": "#/$defs/RoleRecipe"
+    },
+    {
+      "$ref": "#/$defs/Experiment"
+    },
+    {
+      "$ref": "#/$defs/FactoryRelease"
+    },
+    {
+      "$ref": "#/$defs/Evaluation"
+    },
+    {
+      "$ref": "#/$defs/ResultBundle"
+    },
+    {
+      "$ref": "#/$defs/CheckSpec"
+    },
+    {
+      "$ref": "#/$defs/ProjectProfile"
+    },
+    {
+      "$ref": "#/$defs/ModelBinding"
+    },
+    {
+      "$ref": "#/$defs/Models"
+    },
+    {
+      "$ref": "#/$defs/ReadRequest"
+    },
+    {
+      "$ref": "#/$defs/RoleReport"
+    },
+    {
+      "$ref": "#/$defs/RecipeProposal"
+    }
+  ],
+  "$defs": {
+    "Budget": {
+      "type": "object",
+      "properties": {
+        "maxUsd": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "maxMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440
+        }
+      },
+      "required": ["maxUsd", "maxAttempts", "maxMinutes"],
+      "additionalProperties": false
+    },
+    "Acceptance": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "checkId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        }
+      },
+      "required": ["id", "description", "checkId"],
+      "additionalProperties": false
+    },
+    "Delegation": {
+      "type": "object",
+      "properties": {
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["snapshot", "build", "check", "seal", "evaluate", "adopt"]
+          },
+          "maxItems": 256
+        },
+        "autoRecipe": {
+          "type": "boolean"
+        }
+      },
+      "required": ["operations", "autoRecipe"],
+      "additionalProperties": false
+    },
+    "MissionRevision": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parentRevision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "nonGoals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "projectId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "taskType": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "acceptance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Acceptance"
+          },
+          "maxItems": 256
+        },
+        "delegation": {
+          "$ref": "#/$defs/Delegation"
+        },
+        "budget": {
+          "$ref": "#/$defs/Budget"
+        },
+        "delivery": {
+          "type": "string",
+          "enum": ["sealed-tree"]
+        },
+        "factoryRelease": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "parentRevision",
+        "objective",
+        "nonGoals",
+        "projectId",
+        "taskType",
+        "scope",
+        "acceptance",
+        "delegation",
+        "budget",
+        "delivery",
+        "factoryRelease",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "MissionDraft": {
+      "type": "object",
+      "properties": {
+        "objective": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "nonGoals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "ambiguities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        }
+      },
+      "required": ["objective", "nonGoals", "ambiguities"],
+      "additionalProperties": false
+    },
+    "WorkItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "explorer",
+            "builder",
+            "test-designer",
+            "reviewer",
+            "failure-analyst",
+            "improver",
+            "capability-engineer",
+            "knowledge-curator"
+          ]
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "acceptanceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "budgetUsd": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "dependsOn",
+        "scope",
+        "acceptanceIds",
+        "instruction",
+        "budgetUsd"
+      ],
+      "additionalProperties": false
+    },
+    "PlanProposal": {
+      "type": "object",
+      "properties": {
+        "missionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parentRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missionRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkItem"
+          },
+          "maxItems": 256
+        },
+        "estimatedUsd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": [
+        "missionId",
+        "revision",
+        "parentRevision",
+        "missionRevision",
+        "items",
+        "estimatedUsd",
+        "rationale"
+      ],
+      "additionalProperties": false
+    },
+    "Waiting": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "owner": {
+          "type": "string",
+          "enum": ["operator", "runtime", "provider"]
+        },
+        "resumeCondition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": ["reason", "owner", "resumeCondition"],
+      "additionalProperties": false
+    },
+    "Usage": {
+      "type": "object",
+      "properties": {
+        "certainty": {
+          "type": "string",
+          "enum": ["measured", "estimated", "unknown"]
+        },
+        "inputTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usd": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["certainty", "inputTokens", "outputTokens", "usd"],
+      "additionalProperties": false
+    },
+    "Attempt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "missionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "workItemId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "leaseUntil": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "baseDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "reserved",
+            "running",
+            "completed",
+            "failed",
+            "waiting",
+            "uncertain",
+            "cancelled"
+          ]
+        },
+        "waiting": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Waiting"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usage": {
+          "$ref": "#/$defs/Usage"
+        },
+        "stopped": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "missionId",
+        "workItemId",
+        "epoch",
+        "leaseUntil",
+        "baseDigest",
+        "operationId",
+        "state",
+        "waiting",
+        "usage",
+        "stopped"
+      ],
+      "additionalProperties": false
+    },
+    "AgentClaim": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "acceptanceClaims": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "concerns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        }
+      },
+      "required": ["summary", "acceptanceClaims", "concerns"],
+      "additionalProperties": false
+    },
+    "Handoff": {
+      "type": "object",
+      "properties": {
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "baseDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "candidateDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "claim": {
+          "$ref": "#/$defs/AgentClaim"
+        }
+      },
+      "required": [
+        "attemptId",
+        "epoch",
+        "baseDigest",
+        "candidateDigest",
+        "claim"
+      ],
+      "additionalProperties": false
+    },
+    "RunnerFact": {
+      "type": "object",
+      "properties": {
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "failed",
+            "cancelled",
+            "timeout",
+            "refused",
+            "invalid-output",
+            "unknown-event",
+            "auth-expired",
+            "rate-limited",
+            "uncertain"
+          ]
+        },
+        "stopped": {
+          "type": "boolean"
+        },
+        "usage": {
+          "$ref": "#/$defs/Usage"
+        },
+        "handoff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Handoff"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": [
+        "attemptId",
+        "outcome",
+        "stopped",
+        "usage",
+        "handoff",
+        "detail"
+      ],
+      "additionalProperties": false
+    },
+    "EvidenceReceipt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "missionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "targetDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "checkId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "checkVersion": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["pass", "fail"]
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": [
+        "id",
+        "missionId",
+        "targetDigest",
+        "inputDigest",
+        "checkId",
+        "checkVersion",
+        "environment",
+        "issuedAt",
+        "result",
+        "issuer",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "AuthorityGrant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "caller": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "projectId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "missionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["snapshot", "build", "check", "seal", "evaluate", "adopt"]
+          },
+          "maxItems": 256
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "maxUsd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "missionDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "releaseId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        }
+      },
+      "required": [
+        "id",
+        "caller",
+        "projectId",
+        "missionId",
+        "operations",
+        "scope",
+        "expiresAt",
+        "maxUsd",
+        "missionDigest",
+        "releaseId"
+      ],
+      "additionalProperties": false
+    },
+    "RoleRecipe": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "coordinator",
+            "explorer",
+            "builder",
+            "test-designer",
+            "reviewer",
+            "failure-analyst",
+            "improver",
+            "capability-engineer",
+            "knowledge-curator"
+          ]
+        },
+        "profile": {
+          "type": "string",
+          "enum": ["reasoner", "engineer", "scout"]
+        },
+        "inputSchema": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "outputSchema": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["read", "edit-candidate", "propose"]
+          },
+          "maxItems": 256
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "budgetUsd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "promptDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "failureBehavior": {
+          "type": "string",
+          "enum": ["wait", "replan", "reject"]
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "profile",
+        "inputSchema",
+        "outputSchema",
+        "capabilities",
+        "scope",
+        "budgetUsd",
+        "prompt",
+        "promptDigest",
+        "failureBehavior"
+      ],
+      "additionalProperties": false
+    },
+    "Experiment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "lineage": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "hypothesis": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "cause": {
+          "type": "string",
+          "enum": [
+            "information",
+            "contract",
+            "tool",
+            "authority",
+            "reasoning",
+            "planning",
+            "implementation-bug",
+            "unknown"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "projectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "taskTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "baselineRelease": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "suiteId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "suiteDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "minQuality": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxRescue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxUsd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxDurationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxTrials": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "rollbackQuality": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rollbackRescue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "fixed",
+            "evaluating",
+            "adopted",
+            "rejected",
+            "held",
+            "rolled-back"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "minRetryReduction": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "lineage",
+        "hypothesis",
+        "cause",
+        "evidence",
+        "projectIds",
+        "taskTypes",
+        "baselineRelease",
+        "suiteId",
+        "suiteDigest",
+        "minQuality",
+        "maxRescue",
+        "maxUsd",
+        "maxDurationMs",
+        "maxTrials",
+        "rollbackQuality",
+        "rollbackRescue",
+        "status",
+        "createdAt",
+        "minRetryReduction"
+      ],
+      "additionalProperties": false
+    },
+    "FactoryRelease": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["recipe", "core"]
+        },
+        "recipe": {
+          "$ref": "#/$defs/RoleRecipe"
+        },
+        "projectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "taskTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "experimentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["candidate", "canary", "stable", "revoked"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "parent",
+        "kind",
+        "recipe",
+        "projectIds",
+        "taskTypes",
+        "experimentId",
+        "stage",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Evaluation": {
+      "type": "object",
+      "properties": {
+        "experimentId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "releaseId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "suiteDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "quality": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rescueCount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "usd": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "durationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+              },
+              "partition": {
+                "type": "string",
+                "enum": ["development", "separate"]
+              },
+              "passed": {
+                "type": "boolean"
+              }
+            },
+            "required": ["id", "partition", "passed"],
+            "additionalProperties": false
+          },
+          "maxItems": 256
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "retryCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "experimentId",
+        "releaseId",
+        "suiteDigest",
+        "quality",
+        "rescueCount",
+        "usd",
+        "durationMs",
+        "cases",
+        "evidenceIds",
+        "retryCount"
+      ],
+      "additionalProperties": false
+    },
+    "ResultBundle": {
+      "type": "object",
+      "properties": {
+        "missionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "missionRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "failed", "waiting", "cancelled", "running"]
+        },
+        "achieved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+          },
+          "maxItems": 256
+        },
+        "artifact": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "reference": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 16000
+                }
+              },
+              "required": ["digest", "reference"],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceReceipt"
+          },
+          "maxItems": 256
+        },
+        "unmet": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "notRun": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "usage": {
+          "$ref": "#/$defs/Usage"
+        },
+        "factoryRelease": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "completionSignature": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "missionId",
+        "missionRevision",
+        "status",
+        "achieved",
+        "artifact",
+        "checks",
+        "unmet",
+        "notRun",
+        "decisions",
+        "usage",
+        "factoryRelease",
+        "completionSignature"
+      ],
+      "additionalProperties": false
+    },
+    "CheckSpec": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["node-test", "tsc"]
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": ["id", "kind", "files", "version"],
+      "additionalProperties": false
+    },
+    "ProjectProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "taskType": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,119}$"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "acceptance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Acceptance"
+          },
+          "maxItems": 256
+        },
+        "delegation": {
+          "$ref": "#/$defs/Delegation"
+        },
+        "budget": {
+          "$ref": "#/$defs/Budget"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CheckSpec"
+          },
+          "maxItems": 256
+        },
+        "checkRoot": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": [
+        "id",
+        "repository",
+        "taskType",
+        "scope",
+        "acceptance",
+        "delegation",
+        "budget",
+        "checks",
+        "checkRoot"
+      ],
+      "additionalProperties": false
+    },
+    "ModelBinding": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "reasoning": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "verifiedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "priceReference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "inputUsdPerMillion": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputUsdPerMillion": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxOutputTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        }
+      },
+      "required": [
+        "enabled",
+        "model",
+        "reasoning",
+        "verifiedAt",
+        "priceReference",
+        "inputUsdPerMillion",
+        "outputUsdPerMillion",
+        "maxOutputTokens"
+      ],
+      "additionalProperties": false
+    },
+    "Models": {
+      "type": "object",
+      "properties": {
+        "reasoner": {
+          "$ref": "#/$defs/ModelBinding"
+        },
+        "engineer": {
+          "$ref": "#/$defs/ModelBinding"
+        },
+        "scout": {
+          "$ref": "#/$defs/ModelBinding"
+        }
+      },
+      "required": ["reasoner", "engineer", "scout"],
+      "additionalProperties": false
+    },
+    "ReadRequest": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        }
+      },
+      "required": ["paths"],
+      "additionalProperties": false
+    },
+    "RoleReport": {
+      "type": "object",
+      "properties": {
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "unknowns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "reads": {
+          "$ref": "#/$defs/ReadRequest"
+        },
+        "suggestedTests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "maxItems": 256
+        },
+        "approved": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "facts",
+        "hypotheses",
+        "unknowns",
+        "reads",
+        "suggestedTests",
+        "approved"
+      ],
+      "additionalProperties": false
+    },
+    "RecipeProposal": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "hypothesis": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": ["prompt", "hypothesis"],
+      "additionalProperties": false
+    }
+  }
+}

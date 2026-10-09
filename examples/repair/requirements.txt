@@ -1,0 +1,1 @@
+Fix clamp so values below min return min, values above max return max, and in-range values stay unchanged. Preserve the function signature. Deliver a verified source tree; do not deploy or push.

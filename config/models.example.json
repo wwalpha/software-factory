@@ -1,0 +1,32 @@
+{
+  "reasoner": {
+    "enabled": false,
+    "model": "configure-an-account-verified-api-id",
+    "reasoning": "low",
+    "verifiedAt": null,
+    "priceReference": "https://developers.openai.com/api/docs/pricing",
+    "inputUsdPerMillion": null,
+    "outputUsdPerMillion": null,
+    "maxOutputTokens": 4096
+  },
+  "engineer": {
+    "enabled": false,
+    "model": "configure-an-account-verified-api-id",
+    "reasoning": "low",
+    "verifiedAt": null,
+    "priceReference": "https://developers.openai.com/api/docs/pricing",
+    "inputUsdPerMillion": null,
+    "outputUsdPerMillion": null,
+    "maxOutputTokens": 4096
+  },
+  "scout": {
+    "enabled": false,
+    "model": "configure-an-account-verified-api-id",
+    "reasoning": "low",
+    "verifiedAt": null,
+    "priceReference": "https://developers.openai.com/api/docs/pricing",
+    "inputUsdPerMillion": null,
+    "outputUsdPerMillion": null,
+    "maxOutputTokens": 4096
+  }
+}

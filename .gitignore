@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Local Factory state and downloaded official runtime
+.factory/
+.local/
+*.db
+*.db-shm
+*.db-wal
