@@ -1,0 +1,9 @@
+.git
+node_modules
+dist
+.local
+.factory
+.env*
+**/*.pem
+**/*.key
+config/local.json

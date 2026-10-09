@@ -1,0 +1,1 @@
+Extract the duplicated name normalization into one exported normalizeName function. Keep userNames and teamNames behavior and signatures unchanged. Verify empty arrays and whitespace. Deliver a verified source tree only.

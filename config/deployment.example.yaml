@@ -1,0 +1,53 @@
+# Disabled example. Generate usable fake profiles with: node dist/scripts/demo.js
+# For live, provision two different OS users and private data directories first.
+# Never mount guardRoot, Docker socket, host home, or shared .git into Workers.
+mode: live
+runtimeRoot: /srv/factory-runtime/data
+guardRoot: /srv/factory-guard/data
+runtimeSocket: /srv/factory-runtime/runtime.sock
+guardSocket: /srv/factory-ipc/guard.sock
+operatorSocket: /srv/factory-guard/data/operator.sock
+runtimeTokenFile: /srv/factory-runtime/runtime.token
+guardTokenFile: /srv/factory-ipc/runtime-to-guard.token
+operatorTokenFile: /srv/factory-guard/operator.token
+models:
+  reasoner:
+    enabled: false
+    model: configure-an-account-verified-api-id
+    reasoning: low
+    verifiedAt: null
+    priceReference: https://developers.openai.com/api/docs/pricing
+    inputUsdPerMillion: null
+    outputUsdPerMillion: null
+    maxOutputTokens: 4096
+  engineer:
+    enabled: false
+    model: configure-an-account-verified-codex-api-id
+    reasoning: low
+    verifiedAt: null
+    priceReference: https://developers.openai.com/api/docs/pricing
+    inputUsdPerMillion: null
+    outputUsdPerMillion: null
+    maxOutputTokens: 4096
+  scout:
+    enabled: false
+    model: configure-an-account-verified-api-id
+    reasoning: low
+    verifiedAt: null
+    priceReference: https://developers.openai.com/api/docs/pricing
+    inputUsdPerMillion: null
+    outputUsdPerMillion: null
+    maxOutputTokens: 4096
+profiles: [] # Register real ProjectProfile entries, including protected check digests.
+workerImage: REPLACE_WITH_DOCKER_IMAGE_SHA256_DIGEST
+fakeEdits: []
+fakeOmitFirst: false
+suite:
+  id: registered-operator-suite
+  cases:
+    - id: development
+      partition: development
+      projectId: registered-development-project
+    - id: separate
+      partition: separate
+      projectId: registered-separate-project
