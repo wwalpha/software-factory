@@ -106,19 +106,55 @@ Worker receives only a dummy proxy credential. Timeout/cancel removes the named
 container and checks its actual state before accepting files. Host process tests
 also verify descendant process-group termination.
 
-Checks run in fresh containers with candidate and protected check files mounted
-read-only, network none and no credentials. The guard-side check adapter verifies
-check bytes against the registered version first. A protected Node test supervisor
-consumes structured test-runner events and requires real named tests; plain stdout
-or exit 0 is insufficient. A registered TypeScript compilation check is also
-available. These are explicit check types, not an agent-supplied command language.
-Fake mode runs trusted local fixtures on the host and provides no hostile-code
-isolation.
+Node checks keep the evaluator on the trusted Guard host. Its protected tests,
+assertions, expected values and test-event aggregation never import the candidate.
+They use `factory:product` to call a named function or read snapshot source data.
+A private host broker serves only the trusted test helper; its socket is never
+mounted into a product container. Only evaluator output can become a check result.
+
+Every function invocation gets a fresh Product Worker: a separate Docker container
+for live checks, or a same-UID child for managed development fixtures. The product
+receives one bounded request containing module, export name, arguments and a
+correlation ID. Candidate and minimal runtime mounts are read-only. `/factory` is
+masked by a private read-only tmpfs so the shared Builder image's installed Guard,
+evaluator and SDK files are unavailable. No protected tests, expected values,
+Guard tokens/sockets, home or Docker socket are exposed. PID namespaces and
+writable directories are separate from the evaluator. Network none, nonroot,
+capability/privilege restrictions and CPU/memory/PID limits remain.
+
+Worker FD 3 carries observations; stdout/stderr carry bounded, untrusted logs.
+The fixed Docker entry command maps FD 3 onto the attached stdout transport and
+ordinary stdout onto stderr. No log is parsed as an observation or verdict. The
+broker validates one compact JSON response, schema, correlation, UTF-8, value
+types and bounds after worker exit and confirmed container removal. IDs correlate
+requests; they do not authenticate product behavior. `passed` inside a returned
+business object is ordinary data. Workers may fabricate observations, which the
+trusted assertions must still evaluate.
+
+The evaluator requires executed named tests in every declared file, with no
+failure, skip or todo. Its loader closes the module graph over the hashed check
+snapshot and hashed trusted helper; legacy direct candidate imports are refused.
+This is a migration guard, not the hostile-product isolation boundary. Test and
+runtime bytes used for version checking are copied once into the execution
+snapshot. The operator must keep the installed Guard/broker code immutable.
+`checkVersion` includes the evaluator/protocol ID and runtime/helper bytes.
+
+Import, export, call and unsupported-value errors latch a failed check even when
+a protected test catches the error. Protocol violations, output limits, timeout,
+cancel and stop uncertainty throw, preventing receipt issuance for that run.
+Docker creates a named container before attaching, then force-removes it and
+queries the daemon to confirm absence. A failed cleanup is `uncertain` and names
+the container; an exited Docker CLI is insufficient. Stop uncertainty takes
+precedence over a concurrent evaluator cancellation. There is no host fallback.
+The explicit-file `tsc` check remains independent and uses TypeScript 6's
+`--ignoreConfig` to avoid the caller's working-directory configuration.
+Fake host processes are not a malicious-code sandbox.
 
 The complete integrated tree is checked. EvidenceReceipt includes target/input
 hashes, check version, environment, time, result and Guard issuer, signed with
-Ed25519. Only Guard has the signing key. Sealing requires every mandatory condition
-and the delivery boundary. The immutable copy is hashed again, including exact
+Ed25519. Only Guard has the signing key. Sealing requires every registered check
+and mandatory condition, exact current input/check version/environment, stored
+receipt equality and valid signatures. The immutable copy is hashed again, including exact
 bytes and executable bits; later export verifies it again. `factory verify`
 checks the completion signature, check signatures and exported bytes against a
 public key obtained independently through the operator channel.
@@ -152,19 +188,21 @@ in-flight work, without pretending to undo product or external data.
 
 ## Residual risks and limits
 
-Live isolation and real account bindings remain unverified; see validation.md for
-executed checks and missing prerequisites. The implementation fails closed;
+The product Docker product boundary has an executed no-model regression suite; see
+validation.md. Full live deployment and real account bindings remain unverified;
 readiness is not claimed. macOS Docker
 Desktop's VM and Linux Docker have different UID/mount behavior and both require
 an operator-run doctor/live test. Docker daemon access, host root, the installed
 Guard, its image and operator identities remain trusted. OS/container escape and
 host compromise are not eliminated by application code.
 
-Acceptance quality is only as strong as the protected tests/profile. Node test
-code and a product loaded in a test child share that child's JavaScript runtime;
-this is not a proof against every malicious test-harness subversion. Guard and
-signing keys remain outside it. High-risk hostile products should use an
-operator-authored external protocol evaluator before granting broader work.
+Acceptance quality is only as strong as the operator-owned protected tests/profile.
+Calls support finite JSON data, named functions and one fresh module session per
+invocation; cross-call state and arbitrary property chains are unsupported. This
+does not establish complete program correctness, unseen-input generalization,
+freedom from hardcoded outputs, or resistance to OS/container escape. The product
+can lie on its observation channel; it cannot write the evaluator verdict channel
+within the defined Docker boundary and regression cases.
 
 No performance benefit from real GPT is claimed. No production, remote push,
 merge, multi-host operation or external-data rollback is implemented or authorized.

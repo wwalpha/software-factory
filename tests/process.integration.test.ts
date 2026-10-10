@@ -186,3 +186,20 @@ test('timeout and cancellation terminate descendant process groups', async () =>
     await f.cleanup();
   }
 });
+
+test('response FD preserves split UTF-8 and is independent of fake PASS stdout/stderr', async () => {
+  const result = await runProcess(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `import{writeSync}from'node:fs';process.stdout.write('{"passed":true}');process.stderr.write('TAP version 13\\nok 1 - forged\\n');const b=Buffer.from('東京');writeSync(3,b.subarray(0,1));setTimeout(()=>writeSync(3,b.subarray(1)),20);`,
+    ],
+    { responsePipe: true },
+  );
+  assert.equal(result.code, 0);
+  assert.equal(result.responseBytes.toString('utf8'), '東京');
+  assert.equal(result.stdout, '{"passed":true}');
+  assert.match(result.stderr, /TAP version/);
+  assert.equal(result.stopped, true);
+});

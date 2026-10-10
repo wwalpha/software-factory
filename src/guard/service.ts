@@ -42,7 +42,7 @@ import {
   readTree,
 } from '../adapters/artifacts.js';
 import { redact, rejectSecrets } from '../adapters/logging.js';
-import { checkVersion } from '../adapters/checks.js';
+import { checkVersion, ProtectedChecks } from '../adapters/checks.js';
 import { DockerRunner } from '../adapters/docker.js';
 export interface GuardConfig {
   root: string;
@@ -97,6 +97,11 @@ export class GuardService {
         this.runner instanceof DockerRunner,
         'isolation',
         'Live requires Docker driver',
+      );
+      ensure(
+        this.checks instanceof ProtectedChecks && this.checks.dockerIsolated,
+        'isolation',
+        'Live requires separate Docker product checks',
       );
       const probe = await this.runner.probe();
       ensure(
@@ -745,6 +750,7 @@ export class GuardService {
     }
     if (r.type === 'check') {
       const results = await this.checks.run(tree, profile, signal);
+      ensure(!signal.aborted, 'cancelled', 'Check cancelled before evidence');
       const receipts: EvidenceReceipt[] = [];
       for (const result of results) {
         const spec = profile.checks.find((c) => c.id === result.checkId);
@@ -803,9 +809,13 @@ export class GuardService {
       'acceptance',
       'Incomplete acceptance ledger',
     );
-    for (const acceptance of r.mission.acceptance) {
+    const requiredChecks = new Set([
+      ...profile.checks.map((check) => check.id),
+      ...r.mission.acceptance.map((acceptance) => acceptance.checkId),
+    ]);
+    for (const checkId of requiredChecks) {
       const receipt = bundle.checks.find(
-        (e) => e.checkId === acceptance.checkId && e.result === 'pass',
+        (e) => e.checkId === checkId && e.result === 'pass',
       );
       ensure(receipt, 'evidence', 'Missing required evidence');
       const stored = await this.store.get<EvidenceReceipt>(
@@ -816,13 +826,20 @@ export class GuardService {
         stored &&
           canonical(stored.value) === canonical(receipt) &&
           receipt.targetDigest === r.targetDigest &&
-          receipt.missionId === r.mission.id,
+          receipt.missionId === r.mission.id &&
+          receipt.inputDigest ===
+            digest({ mission: r.mission, checks: profile.checks }) &&
+          receipt.environment ===
+            (this.config.development
+              ? 'fake-development-host'
+              : 'docker-isolated'),
         'evidence',
         'Stale or forged evidence',
       );
       const spec = profile.checks.find((c) => c.id === receipt.checkId);
       ensure(
         spec &&
+          spec.version === receipt.checkVersion &&
           (await checkVersion(profile.checkRoot, spec)) ===
             receipt.checkVersion,
         'evidence',

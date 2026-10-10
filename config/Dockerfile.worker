@@ -11,3 +11,4 @@ COPY config/roles.json ./config/roles.json
 RUN npm run build
 USER 1000:1000
 WORKDIR /workspace
+# Product checks mask /factory read-only and mount only their minimal runtime and candidate.

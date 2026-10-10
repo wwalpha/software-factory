@@ -183,11 +183,15 @@ test('merge conflicts and bugs visible only in the integrated tree fail final ch
   try {
     const base: Tree = {
       'a.ts': {
-        content: Buffer.from('export const a=0').toString('base64'),
+        content: Buffer.from('export function readA(){return 0;}').toString(
+          'base64',
+        ),
         executable: false,
       },
       'b.ts': {
-        content: Buffer.from('export const b=0').toString('base64'),
+        content: Buffer.from('export function readB(){return 0;}').toString(
+          'base64',
+        ),
         executable: false,
       },
     };
@@ -195,19 +199,23 @@ test('merge conflicts and bugs visible only in the integrated tree fail final ch
         ...base,
         'a.ts': {
           ...base['a.ts']!,
-          content: Buffer.from('export const a=1').toString('base64'),
+          content: Buffer.from('export function readA(){return 1;}').toString(
+            'base64',
+          ),
         },
       },
       b = {
         ...base,
         'b.ts': {
           ...base['b.ts']!,
-          content: Buffer.from('export const b=1').toString('base64'),
+          content: Buffer.from('export function readB(){return 1;}').toString(
+            'base64',
+          ),
         },
       };
     await writeFile(
       join(h.root, 'checks/cross.mjs'),
-      `import test from 'node:test';import assert from 'node:assert/strict';import{pathToFileURL}from'node:url';const root=process.env.PRODUCT_ROOT;const {a}=await import(pathToFileURL(root+'/a.ts'));const {b}=await import(pathToFileURL(root+'/b.ts'));test('cross invariant',()=>assert.ok(a+b<=1));`,
+      `import test from 'node:test';import assert from 'node:assert/strict';import{callProduct}from'factory:product';test('cross invariant',async()=>assert.ok((await callProduct('a.ts','readA',[]))+(await callProduct('b.ts','readB',[]))<=1));`,
     );
     const spec = {
         id: 'cross',
@@ -308,6 +316,229 @@ test('binary artifacts preserve bytes and secret values cannot hide inside base6
         payload: { tree },
       }),
       /Secret/,
+    );
+  } finally {
+    await h.close();
+  }
+});
+
+test('Trust boundary B/H: shared-assert attack gets no PASS receipt/seal; old method, input, environment and missing mandatory evidence cannot seal', async () => {
+  const h = await harness();
+  try {
+    const p = h.profiles[0]!;
+    await writeFile(
+      join(p.checkRoot, 'mandatory.mjs'),
+      `import test from 'node:test';import assert from 'node:assert/strict';test('mandatory',()=>assert.equal(1,1));`,
+    );
+    const mandatory = {
+      id: 'extra-mandatory',
+      kind: 'node-test' as const,
+      files: ['mandatory.mjs'],
+    };
+    p.checks.push({
+      ...mandatory,
+      version: await checkVersion(p.checkRoot, mandatory),
+    });
+    const m = await h.runtime.submit('repair', p);
+    const grant = await h.grant(m);
+    const request: OperationRequest = {
+      id: randomUUID(),
+      grantId: grant.id,
+      mission: m,
+      type: 'snapshot',
+      targetDigest: digest('snapshot'),
+      amount: 0.01,
+      payload: {},
+    };
+    const snapshot = (await h.guard.operate(request)) as { tree: Tree };
+    const { repairProducts } = await import('./fixtures/check-products.js');
+    const candidate = (source: string): Tree => ({
+      ...snapshot.tree,
+      'range.ts': {
+        content: Buffer.from(source).toString('base64'),
+        executable: false,
+      },
+    });
+    const check = async (tree: Tree) =>
+      (await h.guard.operate({
+        ...request,
+        id: randomUUID(),
+        type: 'check',
+        targetDigest: treeDigest(tree),
+        payload: { tree },
+      })) as { receipts: EvidenceReceipt[] };
+    const bundle = (tree: Tree, receipts: EvidenceReceipt[]) => ({
+      missionId: m.id,
+      missionRevision: m.revision,
+      status: 'completed',
+      achieved: m.acceptance.map((a) => a.id),
+      artifact: { digest: treeDigest(tree), reference: 'candidate' },
+      checks: receipts,
+      unmet: [],
+      notRun: [],
+      decisions: [],
+      usage: { certainty: 'measured', inputTokens: 0, outputTokens: 0, usd: 0 },
+      factoryRelease: m.factoryRelease,
+      completionSignature: null,
+    });
+    const seal = (tree: Tree, receipts: EvidenceReceipt[]) =>
+      h.guard.operate({
+        ...request,
+        id: randomUUID(),
+        type: 'seal',
+        targetDigest: treeDigest(tree),
+        payload: { tree, bundle: bundle(tree, receipts) },
+      });
+    const hostile = candidate(repairProducts.assertMutation);
+    const denied = await check(hostile);
+    assert.equal(
+      denied.receipts.find((r) => r.checkId === p.checks[0]!.id)?.result,
+      'fail',
+    );
+    assert.equal(
+      denied.receipts.some(
+        (r) => r.checkId === p.checks[0]!.id && r.result === 'pass',
+      ),
+      false,
+    );
+    await assert.rejects(
+      seal(hostile, denied.receipts),
+      /Missing required evidence/,
+    );
+    assert.equal(
+      (
+        await h.guardStore.list<{ request: OperationRequest; state: string }>(
+          'operation',
+        )
+      ).some(
+        (r) => r.value.request.type === 'seal' && r.value.state === 'completed',
+      ),
+      false,
+    );
+    const fixed = candidate(repairProducts.correct);
+    const passed = await check(fixed);
+    assert.ok(passed.receipts.every((r) => r.result === 'pass'));
+    await assert.rejects(
+      seal(
+        fixed,
+        passed.receipts.filter((r) => r.checkId !== mandatory.id),
+      ),
+      /Missing required evidence/,
+    );
+    const original = passed.receipts.find(
+      (r) => r.checkId === p.checks[0]!.id,
+    )!;
+    async function historical(patch: Partial<EvidenceReceipt>) {
+      const { signature: _signature, ...unsigned } = {
+        ...original,
+        ...patch,
+        id: randomUUID(),
+      };
+      void _signature;
+      const receipt = { ...unsigned, signature: h.guard.signature(unsigned) };
+      assert.equal(h.guard.verify(unsigned, receipt.signature), true);
+      await h.guardStore.commit(
+        [
+          {
+            kind: 'evidence',
+            id: receipt.id,
+            expectedVersion: 0,
+            value: receipt,
+          },
+        ],
+        { id: randomUUID(), topic: 'historical-fixture', payload: {} },
+      );
+      return passed.receipts.map((r) =>
+        r.checkId === receipt.checkId ? receipt : r,
+      );
+    }
+    const { readFile } = await import('node:fs/promises');
+    const spec = p.checks[0]!;
+    const bytes = await readFile(join(p.checkRoot, spec.files[0]!));
+    const legacyVersion = digest({
+      kind: spec.kind,
+      files: { [spec.files[0]!]: bytes.toString('base64') },
+    });
+    await assert.rejects(
+      seal(fixed, await historical({ checkVersion: legacyVersion })),
+      /Check version changed/,
+    );
+    await assert.rejects(
+      seal(fixed, await historical({ inputDigest: digest('old input') })),
+      /Stale or forged evidence/,
+    );
+    await assert.rejects(
+      seal(fixed, await historical({ environment: 'docker-isolated' })),
+      /Stale or forged evidence/,
+    );
+    const sealed = (await seal(fixed, passed.receipts)) as {
+      bundle: import('../src/domain/contracts.js').ResultBundle;
+    };
+    const { verifyBundle } = await import('../src/adapters/verification.js');
+    verifyBundle(sealed.bundle, fixed, h.guard.publicKey);
+    const changed = candidate(repairProducts.wrong);
+    await assert.rejects(
+      seal(changed, passed.receipts),
+      /Stale or forged evidence/,
+    );
+    await writeFile(
+      join(p.checkRoot, spec.files[0]!),
+      Buffer.concat([bytes, Buffer.from('\n')]),
+    );
+    await assert.rejects(seal(fixed, passed.receipts), /Check version changed/);
+    // Historical signature verification remains valid after migration; new seal admission is separate.
+    verifyBundle(sealed.bundle, fixed, h.guard.publicKey);
+    const broken = candidate(
+      repairProducts.outputForgery +
+        '\nprocess.stdout.write("x".repeat(70000));',
+    );
+    const invalidOperation = {
+      ...request,
+      id: randomUUID(),
+      type: 'check' as const,
+      targetDigest: treeDigest(broken),
+      payload: { tree: broken },
+    };
+    // Restore operator-owned test bytes, without changing the registered expected version.
+    await writeFile(join(p.checkRoot, spec.files[0]!), bytes);
+    const evidenceCount = (await h.guardStore.list('evidence')).length;
+    await assert.rejects(h.guard.operate(invalidOperation), /output exceeded/);
+    assert.equal(
+      (
+        await h.guardStore.get<{ state: string }>(
+          'operation',
+          invalidOperation.id,
+        )
+      )?.value.state,
+      'uncertain',
+    );
+    assert.equal((await h.guardStore.list('evidence')).length, evidenceCount);
+    const realRun = h.checks.run.bind(h.checks);
+    // Cancel after real evaluator/worker completion, before Guard can issue evidence.
+    h.checks.run = async (...args) => {
+      const results = await realRun(...args);
+      await h.guard.call('cancelMission', m.id);
+      return results;
+    };
+    const cancelledOperation = {
+      ...invalidOperation,
+      id: randomUUID(),
+      targetDigest: treeDigest(fixed),
+      payload: { tree: fixed },
+    };
+    await assert.rejects(
+      h.guard.operate(cancelledOperation),
+      /cancelled before evidence/,
+    );
+    assert.equal((await h.guardStore.list('evidence')).length, evidenceCount);
+    assert.equal(
+      (
+        await h.guardStore.get<{ state: string }>(
+          'operation',
+          cancelledOperation.id,
+        )
+      )?.value.state,
+      'uncertain',
     );
   } finally {
     await h.close();

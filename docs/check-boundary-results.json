@@ -1,0 +1,4213 @@
+{
+  "recordDate": "2026-10-10 Asia/Tokyo",
+  "baselineCommit": "b7a7e835ed798bb89f41ff186f909656e98c3794",
+  "environment": {
+    "node": "24.21.0",
+    "npm": "11.19.0",
+    "host": "macOS 27.0.1 arm64",
+    "dockerClient": "29.0.2",
+    "dockerServer": "29.8.2",
+    "dockerPlatform": "linux/aarch64",
+    "regressionImage": "sha256:bfe7fbde41af52e161a3e420330f7bd89e8b8c199d028cba1c0e5b35232e8e4c",
+    "benchmarkImage": "sha256:801426a87f5b6a480fae554af82e8099add184c2dffa4fca76945265407f5a18",
+    "containerNode": "24.21.0",
+    "containerNpm": "11.19.0"
+  },
+  "method": {
+    "repetitions": 3,
+    "fixtures": "tests/fixtures/check-products.ts plus repair/refactor from examples and tests/helpers.ts",
+    "tests": "original protected tests in baseline archive; migrated equivalent protected tests after",
+    "timing": "wall time for complete ProtectedChecks.run, including 10ms asynchronous process sampling; excludes waiting for sampling completion and querying Docker events",
+    "processes": "parentStarts are actual direct spawn calls; observedProcesses union includes sampled descendants on desktop host and may miss short-lived processes or include transient fork observations; sampler excluded; container processes are not counted as host processes",
+    "containers": "distinct actual Docker daemon start event IDs",
+    "state": "fresh worker per call after; sequential product containers, no module state reuse"
+  },
+  "commands": {
+    "offline": "npm run check",
+    "docker": "PRODUCT_CHECK_IMAGE=<actual pinned image ID> npm run test:docker:checks",
+    "fake": "node dist/scripts/demo.js",
+    "beforeHost": "node .factory/check-boundary/baseline/dist/scripts/check-boundary-probe.js",
+    "afterHost": "node dist/scripts/check-boundary-probe.js",
+    "dockerBenchmark": "same probe commands with PRODUCT_CHECK_IMAGE set to benchmarkImage"
+  },
+  "validation": {
+    "npmCi": "PASS, 132 packages; unchanged lockfile/dependencies/engines",
+    "beforeCheck": {
+      "pass": 25,
+      "fail": 0,
+      "exitCode": 0
+    },
+    "afterCheck": {
+      "pass": 34,
+      "fail": 0,
+      "skip": 0,
+      "exitCode": 0
+    },
+    "dockerCheck": {
+      "pass": 6,
+      "fail": 0,
+      "skip": 0,
+      "exitCode": 0
+    },
+    "beforeFakeDemo": "PASS, both completed, fake evolution adoption and rollback in temporary fixture",
+    "afterFakeDemo": "PASS, both completed, fake evolution adoption and rollback in temporary fixture",
+    "liveReadiness": "NOT APPROVED: full deployment identities and paid/provider gates not tested",
+    "paidBindings": "NOT RUN",
+    "liveTest": "NOT RUN in this change",
+    "remainingProductCheckContainers": 0,
+    "noSilentCoercion": "PASS: expected null/[null]/{} fixtures still fail for undefined, NaN, Infinity, hidden array undefined/accessors and object undefined; actual host and Docker workers"
+  },
+  "measurements": {
+    "before": {
+      "host": {
+        "node": "v24.21.0",
+        "platform": "darwin",
+        "image": null,
+        "results": [
+          {
+            "name": "correct",
+            "medianMs": 71,
+            "samples": [
+              {
+                "ms": 71,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 72,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrong",
+            "medianMs": 69,
+            "samples": [
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertMutation",
+            "medianMs": 71,
+            "samples": [
+              {
+                "ms": 72,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 71,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "outputForgery",
+            "medianMs": 69,
+            "samples": [
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "testMutation",
+            "medianMs": 70,
+            "samples": [
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 71,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 70,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "earlyExit",
+            "medianMs": 65,
+            "samples": [
+              {
+                "ms": 64,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 66,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 65,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "importError",
+            "medianMs": 64,
+            "samples": [
+              {
+                "ms": 64,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 65,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 63,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "correctRefactor",
+            "medianMs": 71,
+            "samples": [
+              {
+                "ms": 70,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 71,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 72,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrongRefactor",
+            "medianMs": 69,
+            "samples": [
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 68,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 71,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertRefactor",
+            "medianMs": 71,
+            "samples": [
+              {
+                "ms": 69,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 72,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 71,
+                "parentStarts": 1,
+                "observedProcesses": 2,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "docker": {
+        "node": "v24.21.0",
+        "platform": "darwin",
+        "image": "sha256:801426a87f5b6a480fae554af82e8099add184c2dffa4fca76945265407f5a18",
+        "results": [
+          {
+            "name": "correct",
+            "medianMs": 163,
+            "samples": [
+              {
+                "ms": 178,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 155,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 163,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrong",
+            "medianMs": 161,
+            "samples": [
+              {
+                "ms": 164,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 161,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 154,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertMutation",
+            "medianMs": 159,
+            "samples": [
+              {
+                "ms": 159,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 165,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 157,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "outputForgery",
+            "medianMs": 156,
+            "samples": [
+              {
+                "ms": 168,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 156,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 153,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "testMutation",
+            "medianMs": 160,
+            "samples": [
+              {
+                "ms": 160,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 155,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 165,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "earlyExit",
+            "medianMs": 156,
+            "samples": [
+              {
+                "ms": 151,
+                "parentStarts": 2,
+                "observedProcesses": 13,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 156,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 162,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "importError",
+            "medianMs": 155,
+            "samples": [
+              {
+                "ms": 159,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 155,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 152,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "correctRefactor",
+            "medianMs": 156,
+            "samples": [
+              {
+                "ms": 156,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 157,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 156,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrongRefactor",
+            "medianMs": 158,
+            "samples": [
+              {
+                "ms": 158,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 152,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 158,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 2,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertRefactor",
+            "medianMs": 154,
+            "samples": [
+              {
+                "ms": 152,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 154,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              },
+              {
+                "ms": 155,
+                "parentStarts": 2,
+                "observedProcesses": 2,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/run",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "after": {
+      "host": {
+        "node": "v24.21.0",
+        "platform": "darwin",
+        "image": null,
+        "results": [
+          {
+            "name": "correct",
+            "medianMs": 232,
+            "samples": [
+              {
+                "ms": 233,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 232,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 224,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrong",
+            "medianMs": 108,
+            "samples": [
+              {
+                "ms": 109,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 108,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 107,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertMutation",
+            "medianMs": 109,
+            "samples": [
+              {
+                "ms": 102,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 109,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 110,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "outputForgery",
+            "medianMs": 107,
+            "samples": [
+              {
+                "ms": 109,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 103,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 107,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "testMutation",
+            "medianMs": 123,
+            "samples": [
+              {
+                "ms": 112,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 124,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 123,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "earlyExit",
+            "medianMs": 115,
+            "samples": [
+              {
+                "ms": 122,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": {
+                  "error": "Invalid or missing product response"
+                }
+              },
+              {
+                "ms": 115,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": {
+                  "error": "Invalid or missing product response"
+                }
+              },
+              {
+                "ms": 103,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": {
+                  "error": "Invalid or missing product response"
+                }
+              }
+            ]
+          },
+          {
+            "name": "importError",
+            "medianMs": 102,
+            "samples": [
+              {
+                "ms": 104,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 101,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 102,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "correctRefactor",
+            "medianMs": 228,
+            "samples": [
+              {
+                "ms": 226,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 230,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 228,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrongRefactor",
+            "medianMs": 106,
+            "samples": [
+              {
+                "ms": 104,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 106,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 119,
+                "parentStarts": 2,
+                "observedProcesses": 3,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertRefactor",
+            "medianMs": 152,
+            "samples": [
+              {
+                "ms": 145,
+                "parentStarts": 3,
+                "observedProcesses": 4,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 158,
+                "parentStarts": 3,
+                "observedProcesses": 4,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 152,
+                "parentStarts": 3,
+                "observedProcesses": 4,
+                "containers": 0,
+                "exitCodes": [
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "product",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "docker": {
+        "node": "v24.21.0",
+        "platform": "darwin",
+        "image": "sha256:801426a87f5b6a480fae554af82e8099add184c2dffa4fca76945265407f5a18",
+        "results": [
+          {
+            "name": "correct",
+            "medianMs": 747,
+            "samples": [
+              {
+                "ms": 747,
+                "parentStarts": 17,
+                "observedProcesses": 18,
+                "containers": 4,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 752,
+                "parentStarts": 17,
+                "observedProcesses": 18,
+                "containers": 4,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 728,
+                "parentStarts": 17,
+                "observedProcesses": 18,
+                "containers": 4,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrong",
+            "medianMs": 237,
+            "samples": [
+              {
+                "ms": 240,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 237,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 232,
+                "parentStarts": 5,
+                "observedProcesses": 7,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertMutation",
+            "medianMs": 243,
+            "samples": [
+              {
+                "ms": 248,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 241,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 243,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "outputForgery",
+            "medianMs": 230,
+            "samples": [
+              {
+                "ms": 230,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 228,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 237,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "testMutation",
+            "medianMs": 247,
+            "samples": [
+              {
+                "ms": 250,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 231,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 247,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "earlyExit",
+            "medianMs": 237,
+            "samples": [
+              {
+                "ms": 249,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": {
+                  "error": "Invalid or missing product response"
+                }
+              },
+              {
+                "ms": 229,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": {
+                  "error": "Invalid or missing product response"
+                }
+              },
+              {
+                "ms": 237,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": {
+                  "error": "Invalid or missing product response"
+                }
+              }
+            ]
+          },
+          {
+            "name": "importError",
+            "medianMs": 235,
+            "samples": [
+              {
+                "ms": 250,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 226,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 235,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "repair-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "correctRefactor",
+            "medianMs": 728,
+            "samples": [
+              {
+                "ms": 718,
+                "parentStarts": 17,
+                "observedProcesses": 18,
+                "containers": 4,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 728,
+                "parentStarts": 17,
+                "observedProcesses": 19,
+                "containers": 4,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              },
+              {
+                "ms": 743,
+                "parentStarts": 17,
+                "observedProcesses": 18,
+                "containers": 4,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 0,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": true,
+                    "detail": "Protected assertions passed via external product calls"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "wrongRefactor",
+            "medianMs": 240,
+            "samples": [
+              {
+                "ms": 243,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 236,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 240,
+                "parentStarts": 5,
+                "observedProcesses": 6,
+                "containers": 1,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "assertRefactor",
+            "medianMs": 405,
+            "samples": [
+              {
+                "ms": 411,
+                "parentStarts": 9,
+                "observedProcesses": 10,
+                "containers": 2,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 405,
+                "parentStarts": 9,
+                "observedProcesses": 10,
+                "containers": 2,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              },
+              {
+                "ms": 388,
+                "parentStarts": 9,
+                "observedProcesses": 10,
+                "containers": 2,
+                "exitCodes": [
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/create",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/start",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/rm",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "docker/ps",
+                    "code": 0,
+                    "signal": null
+                  },
+                  {
+                    "channel": "evaluator",
+                    "code": 2,
+                    "signal": null
+                  }
+                ],
+                "result": [
+                  {
+                    "checkId": "refactor-acceptance",
+                    "passed": false,
+                    "detail": "Protected check failed or returned incomplete results"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "extraBefore": {
+    "node": "v24.21.0",
+    "image": "sha256:801426a87f5b6a480fae554af82e8099add184c2dffa4fca76945265407f5a18",
+    "records": [
+      {
+        "case": "product reads protected test in old Docker container and changes assert",
+        "environment": "docker",
+        "result": [
+          {
+            "checkId": "repair-acceptance",
+            "passed": true,
+            "detail": "Protected assertions passed"
+          }
+        ]
+      },
+      {
+        "case": "baseline correct tsc",
+        "environment": "host",
+        "result": [
+          {
+            "checkId": "types",
+            "passed": false,
+            "detail": "Protected check failed or returned incomplete results"
+          }
+        ]
+      },
+      {
+        "case": "baseline correct tsc",
+        "environment": "docker",
+        "result": [
+          {
+            "checkId": "types",
+            "passed": true,
+            "detail": "Protected assertions passed"
+          }
+        ]
+      }
+    ]
+  },
+  "extraAfter": {
+    "node": "v24.21.0",
+    "image": "sha256:801426a87f5b6a480fae554af82e8099add184c2dffa4fca76945265407f5a18",
+    "records": [
+      {
+        "case": "product reads protected test in old Docker container and changes assert",
+        "environment": "docker",
+        "result": [
+          {
+            "checkId": "repair-acceptance",
+            "passed": false,
+            "detail": "Protected check failed or returned incomplete results"
+          }
+        ]
+      },
+      {
+        "case": "current correct tsc",
+        "environment": "host",
+        "result": [
+          {
+            "checkId": "types",
+            "passed": true,
+            "detail": "Protected assertions passed via external product calls"
+          }
+        ]
+      },
+      {
+        "case": "current correct tsc",
+        "environment": "docker",
+        "result": [
+          {
+            "checkId": "types",
+            "passed": true,
+            "detail": "Protected assertions passed via external product calls"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -22,6 +22,7 @@
     "build": "tsc",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "test:integration": "npm run build && node --test dist/tests/*.integration.test.js",
+    "test:docker:checks": "npm run build && node --test dist/scripts/check-boundary-docker.js",
     "test:live": "npm run build && node dist/scripts/live.js",
     "check": "npm run schema:check && npm run typecheck && npm run lint && npm run format:check && npm test"
   },

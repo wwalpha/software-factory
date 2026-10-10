@@ -202,6 +202,99 @@ node dist/src/cli/factory.js verify result.json \
 Stdout contains result JSON; Pino operational logs go to stderr. No chain of
 thought, aggregate Codex command logs or environment dumps are persisted.
 
+## Protected test migration (1010v1)
+
+Product code runs separately from the evaluator. Keep ordinary `node:test` and
+trusted assertions, replacing candidate imports with the registered helper:
+
+```js
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { callProduct, readProductSource } from 'factory:product';
+
+test('public function contract', async () => {
+  assert.equal(await callProduct('module.ts', 'namedFunction', [7]), 14);
+  assert.ok((await readProductSource('module.ts')).includes('namedFunction'));
+});
+```
+
+The example is an API illustration; operators supply the actual acceptance.
+`readProductSource` reads the same immutable candidate snapshot as data on the
+trusted side. The product never supplies its own structural inspection result.
+Only declared, hashed check files and the installed trusted helper can be loaded.
+Legacy direct imports, undeclared helpers and OS-capable test imports are refused;
+use the helper for calls/source reads. Pure Node test/assert/path/url/util/buffer/
+timer builtins remain available. Never evaluate candidate source in a test.
+
+A call invokes a candidate-relative module's **own named function export** once;
+the export name must be an ASCII JavaScript identifier.
+Absolute/traversal/URL paths, links and property chains are refused. Each call is a
+fresh session; module state lasts only through that invocation, then the Worker
+is discarded. There is no state reuse across calls or checks. Async results must
+settle within 10 seconds. Cross-call state and arbitrary object/exception transport
+are outside this API.
+
+Values are lossless UTF-8 JSON data: null, booleans, finite numbers (excluding
+negative zero), strings, dense arrays and plain records, to depth 32. Undefined,
+NaN, infinities, bigint, symbols, sparse/decorated arrays, accessors, class instances
+and cycles are explicitly rejected. Each request/response is at most 64 KiB;
+combined product logs/response have the same byte limit. A check allows at most
+128 observations (including source reads), serializes product calls and has the
+existing 45-second test / 60-second evaluator limit. Exactly one compact JSON
+message with matching protocol/ID is required; duplicate/missing/other-ID frames
+and invalid UTF-8 fail closed. IDs are correlation, not authenticity. A returned
+`{ passed: true }` is ordinary business data; only trusted assertions decide PASS.
+
+Existing profile versions and old PASS receipts cannot authorize new checks or
+seals. The public CheckPort, CheckSpec and Receipt/signature schemas are unchanged;
+`checkVersion` now binds the method and trusted runtime/helper bytes for both
+check kinds. Historical artifacts can still be verified with their public key.
+
+Operator migration is explicit:
+
+1. Protect the installed Guard/runtime and check directory from runtime writes.
+   Rebuild with the pinned Node/npm, then migrate and review every protected test,
+   preserving its acceptance and structural checks. Keep `tsc` as its own check.
+2. Generate a **new** profile file from the reviewed checks; do not rewrite an
+   expected version automatically after a failed verification:
+
+   ```sh
+   node --input-type=module - /absolute/reviewed-profile.json /absolute/profile-checked.json <<'JS'
+   import { readFile, writeFile } from 'node:fs/promises';
+   import { checkVersion } from './dist/src/adapters/checks.js';
+   const [input, output] = process.argv.slice(2);
+   const profile = JSON.parse(await readFile(input, 'utf8'));
+   for (const check of profile.checks)
+     check.version = await checkVersion(profile.checkRoot, check);
+   await writeFile(output, JSON.stringify(profile, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+   JS
+   ```
+
+3. Review the resulting versions, register that profile through the existing
+   operator-owned Guard/runtime configuration procedure and restart the services.
+   Issue a fresh mission/grant and rerun all checks. Old operation IDs are
+   historical/idempotent retrieval, not evidence for a new seal.
+
+No compatibility import fallback exists. Fake uses only managed host fixtures and
+must never execute arbitrary hostile products. For the no-model Docker regression:
+
+```sh
+docker build -f config/Dockerfile.worker -t software-factory-worker:local .
+PRODUCT_CHECK_IMAGE="$(docker image inspect software-factory-worker:local --format '{{.Id}}')" \
+  npm run test:docker:checks
+node dist/scripts/check-boundary-probe.js # managed host fixtures; three samples per case
+# Set PRODUCT_CHECK_IMAGE to the pinned ID for the Docker benchmark instead.
+```
+
+A missing Docker/image or unconfirmed removal refuses success and never runs the
+product on the host. An `uncertain` cleanup identifies `factory-product-*` or
+`factory-check-*`; an operator must inspect/force-remove it and confirm absence
+before permitting further work. Do not treat `docker` CLI exit as stop proof.
+Fresh workers add startup/communication cost; see [measured results](docs/validation.md).
+This change prevents the defined judge-interference cases; it does not prove
+complete correctness, prevent hardcoded responses or establish container escape
+resistance. Live eligibility still requires the separate deployment gates.
+
 ## Improvement, observation and rollback
 
 ```sh
@@ -244,7 +337,7 @@ of better GPT quality, lower human rescue time or real cost savings.
 | 5    | Cancelled mission                                               |
 
 `schema:generate`, `schema:check`, `typecheck`, `lint`, `format:check`, `build`,
-`test`, `test:integration`, `test:live` and `check` are available.
+`test`, `test:integration`, `test:docker:checks`, `test:live` and `check` are available.
 `npm test` has no external LLM requests or credentials. Integration tests use real
 Git, SQLite, processes, local sockets and local SDK protocol fixtures.
 

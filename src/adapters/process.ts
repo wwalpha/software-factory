@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import type { Readable } from 'node:stream';
 import { FactoryError } from '../domain/invariants.js';
 export interface ProcessResult {
   code: number;
@@ -6,6 +7,7 @@ export interface ProcessResult {
   stdoutBytes: Buffer;
   stderr: string;
   stopped: boolean;
+  responseBytes: Buffer;
 }
 export function runProcess(
   command: string,
@@ -17,6 +19,7 @@ export function runProcess(
     timeoutMs?: number;
     maxBytes?: number;
     input?: string;
+    responsePipe?: boolean;
   } = {},
 ): Promise<ProcessResult> {
   return new Promise((resolve, reject) => {
@@ -26,21 +29,29 @@ export function runProcess(
         PATH: process.env.PATH ?? '/usr/bin:/bin',
         LANG: 'C.UTF-8',
       },
-      stdio: 'pipe',
+      stdio: options.responsePipe ? ['pipe', 'pipe', 'pipe', 'pipe'] : 'pipe',
       detached: true,
     });
     let stdout = '',
       stderr = '',
+      bytes = 0,
+      stopping = false,
       failure: Error | undefined;
     const chunks: Buffer[] = [];
+    const responses: Buffer[] = [];
     function stop(reason: Error) {
       failure ??= reason;
+      if (stopping) return;
+      stopping = true;
       if (child.pid) {
         try {
           process.kill(-child.pid, 'SIGKILL');
         } catch (e) {
           if (!(e instanceof Error && 'code' in e && e.code === 'ESRCH'))
-            failure = e instanceof Error ? e : new Error('Kill failed');
+            failure = new FactoryError(
+              'uncertain',
+              'Process group stop not confirmed',
+            );
         }
       }
     }
@@ -51,19 +62,27 @@ export function runProcess(
       () => stop(new FactoryError('timeout', 'Process timed out')),
       options.timeoutMs ?? 60000,
     );
-    const collect = (chunk: Buffer, stream: 'stdout' | 'stderr') => {
+    const collect = (
+      chunk: Buffer,
+      stream: 'stdout' | 'stderr' | 'response',
+    ) => {
+      bytes += chunk.length;
+      if (bytes > (options.maxBytes ?? 1024 * 1024)) {
+        stop(new FactoryError('output-limit', 'Process output exceeded limit'));
+        return;
+      }
       if (stream === 'stdout') {
         stdout += chunk.toString();
         chunks.push(chunk);
-      } else stderr += chunk.toString();
-      if (
-        Buffer.byteLength(stdout) + Buffer.byteLength(stderr) >
-        (options.maxBytes ?? 1024 * 1024)
-      )
-        stop(new FactoryError('output-limit', 'Process output exceeded limit'));
+      } else if (stream === 'stderr') stderr += chunk.toString();
+      else responses.push(chunk);
     };
     child.stdout.on('data', (c: Buffer) => collect(c, 'stdout'));
     child.stderr.on('data', (c: Buffer) => collect(c, 'stderr'));
+    if (options.responsePipe)
+      (child.stdio[3] as Readable).on('data', (c: Buffer) =>
+        collect(c, 'response'),
+      );
     child.on('error', (e) => {
       failure = e;
     });
@@ -78,6 +97,7 @@ export function runProcess(
           stdoutBytes: Buffer.concat(chunks),
           stderr,
           stopped: true,
+          responseBytes: Buffer.concat(responses),
         });
     });
     child.stdin.on('error', () => {
