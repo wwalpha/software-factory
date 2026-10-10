@@ -100,9 +100,10 @@ try {
           'schema',
           'Invalid run',
         );
-        return method === 'experimentRun'
-          ? runtime.runExperiment(params.id, params.mode)
-          : runtime.run(params.id, params.mode);
+        if (method === 'experimentRun')
+          return runtime.runExperiment(params.id, params.mode);
+        if (method === 'resume') return runtime.resume(params.id, params.mode);
+        return runtime.run(params.id, params.mode);
       }
       if (method === 'revise') {
         ensure(

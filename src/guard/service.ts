@@ -460,6 +460,28 @@ export class GuardService {
       }
       return { stopped };
     }
+    if (method === 'authorizeRole') {
+      ensure(
+        params &&
+          typeof params === 'object' &&
+          'mission' in params &&
+          'grantId' in params &&
+          typeof params.grantId === 'string',
+        'schema',
+        'Invalid role authorization',
+      );
+      const mission = contract('MissionRevision', params.mission);
+      await this.authorize({
+        id: 'role-authorization',
+        grantId: params.grantId,
+        mission,
+        type: 'snapshot',
+        targetDigest: digest('snapshot'),
+        amount: 0.01,
+        payload: {},
+      });
+      return { authorized: true };
+    }
     if (method === 'info') return this.info();
     if (method === 'releaseStatus')
       return (await this.store.list<FactoryRelease>('release')).map(

@@ -21,6 +21,10 @@ export interface AttemptAdmission {
   attemptId: string;
   missionId: string;
 }
+export interface CommitBudget {
+  reservation?: { id: string; account: string; amount: number; limit: number };
+  settlements?: { id: string; actual: number | null }[];
+}
 export interface PersistencePort {
   get<T = unknown>(kind: string, id: string): Promise<Stored<T> | null>;
   list<T = unknown>(kind: string): Promise<Stored<T>[]>;
@@ -28,6 +32,7 @@ export interface PersistencePort {
     writes: Write[],
     event: Event,
     admission?: AttemptAdmission,
+    budget?: CommitBudget,
   ): Promise<{ duplicate: boolean }>;
   pending(): Promise<Event[]>;
   ack(id: string): Promise<void>;

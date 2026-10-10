@@ -7,6 +7,7 @@ import type {
   PlanProposal,
   ProjectProfile,
   Usage,
+  RoleReport,
   RunnerFact,
 } from '../domain/contracts.js';
 import { type Tree, treeDigest, validateCandidate } from './artifacts.js';
@@ -70,7 +71,11 @@ export class FakePlanner implements PlanningPort {
       usage: fakeUsage,
     };
   }
-  async report(_role: unknown, _input: unknown, _signal: AbortSignal) {
+  async report(
+    _role: unknown,
+    _input: unknown,
+    _signal: AbortSignal,
+  ): Promise<{ value: RoleReport; usage: Usage }> {
     return {
       value: {
         facts: ['Deterministic offline role double'],

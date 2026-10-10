@@ -2,7 +2,12 @@ import { parentPort, workerData } from 'node:worker_threads';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import type { Write, Event, AttemptAdmission } from '../ports/store.js';
+import type {
+  Write,
+  Event,
+  AttemptAdmission,
+  CommitBudget,
+} from '../ports/store.js';
 import type { Attempt, MissionRevision } from '../domain/contracts.js';
 import type { OperationRequest } from '../ports/guard.js';
 import { ensure, FactoryError } from '../domain/invariants.js';
@@ -15,6 +20,7 @@ type Request = { id: number } & (
       event: Event;
       fault?: 'before' | 'after';
       admission?: AttemptAdmission;
+      budget?: CommitBudget;
     }
   | { op: 'pending' }
   | { op: 'ack'; key: string }
@@ -82,6 +88,25 @@ const reserve = (
     amount,
   );
 };
+const settle = (id: string, actual: number | null): null => {
+  const old = db.prepare('SELECT * FROM reservations WHERE id=?').get(id);
+  ensure(old, 'budget', 'No reservation');
+  ensure(
+    actual === null || (Number.isFinite(actual) && actual >= 0),
+    'budget',
+    'Invalid usage',
+  );
+  if (old.settled) {
+    ensure(old.actual === actual, 'duplicate-conflict', 'Settlement changed');
+    return null;
+  }
+  let unknown = 0;
+  if (actual === null) unknown = 1;
+  db.prepare(
+    'UPDATE reservations SET actual=?, settled=1, unknown=? WHERE id=?',
+  ).run(actual, unknown, id);
+  return null;
+};
 function transaction<T>(fn: () => T): T {
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -112,6 +137,7 @@ function execute(r: Request): unknown {
             writes: r.writes,
             event: r.event,
             admission: r.admission,
+            ...(r.budget && { budget: r.budget }),
           }),
         )
         .digest('hex');
@@ -174,6 +200,12 @@ function execute(r: Request): unknown {
           );
           reserve(attemptId, missionId, dispatch.amount, mission.budget.maxUsd);
         }
+        if (r.budget?.reservation) {
+          const { id, account, amount, limit } = r.budget.reservation;
+          reserve(id, account, amount, limit);
+        }
+        for (const entry of r.budget?.settlements ?? [])
+          settle(entry.id, entry.actual);
         for (const w of r.writes) {
           const old = db
             .prepare('SELECT version FROM records WHERE kind=? AND id=?')
@@ -215,27 +247,7 @@ function execute(r: Request): unknown {
       });
     case 'settle':
       return transaction(() => {
-        const old = db
-          .prepare('SELECT * FROM reservations WHERE id=?')
-          .get(r.key);
-        ensure(old, 'budget', 'No reservation');
-        ensure(
-          r.actual === null || (Number.isFinite(r.actual) && r.actual >= 0),
-          'budget',
-          'Invalid usage',
-        );
-        if (old.settled) {
-          ensure(
-            old.actual === r.actual,
-            'duplicate-conflict',
-            'Settlement changed',
-          );
-          return null;
-        }
-        db.prepare(
-          'UPDATE reservations SET actual=?, settled=1, unknown=? WHERE id=?',
-        ).run(r.actual, r.actual === null ? 1 : 0, r.key);
-        return null;
+        return settle(r.key, r.actual);
       });
     case 'balance':
       return balance(r.account);
