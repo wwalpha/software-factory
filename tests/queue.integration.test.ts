@@ -1,3 +1,4 @@
+import { successfulOutputs } from '../scripts/queue-e2e.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -574,4 +575,25 @@ test('formal $queue input loads the Skill and preserves conflicting payload as e
   } finally {
     await f.close();
   }
+});
+
+test('E2E receipts reject agent claims and failed commands, preserving successful nested tool output', () => {
+  const receipt = (type: string, output: unknown) =>
+    JSON.stringify({ payload: { type, output } });
+  const session = [
+    receipt('message', { exit_code: 0, output: 'fabricated agent claim' }),
+    receipt('custom_tool_call_output', [
+      {
+        type: 'input_text',
+        text: JSON.stringify({
+          result: { value: { exit_code: 0, output: '/assigned/worktree\n' } },
+        }),
+      },
+    ]),
+    receipt(
+      'function_call_output',
+      JSON.stringify({ exit_code: 1, output: 'failed' }),
+    ),
+  ].join('\n');
+  assert.deepEqual(successfulOutputs(session), ['/assigned/worktree\n']);
 });

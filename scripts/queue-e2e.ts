@@ -1,10 +1,41 @@
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Queue } from './queue.js';
 import { AppServer, array, object, string } from './codex-app-probe.js';
 import { Worktrees } from './worktree.js';
+
+// Legacy history omits nested tool calls from thread/read; inspect actual tool receipts.
+export function successfulOutputs(session: string): string[] {
+  const outputs: string[] = [];
+  const visit = (value: unknown): void => {
+    if (typeof value === 'string') {
+      try {
+        visit(JSON.parse(value));
+      } catch {
+        /* Plain text is not a tool receipt. */
+      }
+    } else if (Array.isArray(value)) value.forEach(visit);
+    else if (value !== null && typeof value === 'object') {
+      const entry = value as Record<string, unknown>;
+      if (entry.exit_code === 0 && typeof entry.output === 'string')
+        outputs.push(entry.output);
+      Object.values(entry).forEach(visit);
+    }
+  };
+  for (const line of session.trim().split('\n')) {
+    const entry = object(JSON.parse(line));
+    const payload = object(entry.payload);
+    if (
+      payload.type === 'custom_tool_call_output' ||
+      payload.type === 'function_call_output'
+    )
+      visit(payload.output);
+  }
+  return outputs;
+}
 
 // Explicit opt-in: two real independent Codex tasks, never part of npm test/check.
 const main = async () => {
@@ -111,17 +142,26 @@ const main = async () => {
       const commands = entries.filter(
         (item) => item.type === 'commandExecution',
       );
+      const receipts = successfulOutputs(
+        readFileSync(string(thread.path), 'utf8'),
+      );
       assert.ok(
         commands.some(
           (item) => string(item.command).includes('pwd') && item.exitCode === 0,
-        ),
+        ) ||
+          receipts.some((output) =>
+            output.trim().split('\n').includes(join(manager.root, c.taskId)),
+          ),
         'C did not execute pwd successfully',
       );
       assert.ok(
         commands.some(
           (item) =>
             string(item.command).includes('git branch') && item.exitCode === 0,
-        ),
+        ) ||
+          receipts.some((output) =>
+            output.trim().split('\n').includes(`task/${c.taskId}`),
+          ),
         'C did not inspect its branch',
       );
       const replies = entries
@@ -136,7 +176,7 @@ const main = async () => {
         ),
         'C did not report the observed assigned worktree',
       );
-      execution = { commands, replies };
+      execution = { commands, receipts, replies };
     } finally {
       await server.close();
     }
@@ -158,7 +198,12 @@ const main = async () => {
     console.log(JSON.stringify({ ...result, evidence: path }, null, 2));
   });
 };
-main().catch((error: unknown) => {
-  console.error(String(error));
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+) {
+  main().catch((error: unknown) => {
+    console.error(String(error));
+    process.exitCode = 1;
+  });
+}

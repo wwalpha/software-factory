@@ -147,3 +147,7 @@ turn can resume Cleanup through recovery without any new start/turn request.
 The user confirmed q-0001 is visible outside the project section; project placement
 is separate from visibility. GUI interaction and native slash recognition still
 require the user's device result.
+
+Legacy `thread/read` also omits nested tool execution items. The explicit E2E
+checker verifies zero-exit command receipts in the saved session log and rejects
+agent-only claims. No conversation log is passed to a newly started task.
