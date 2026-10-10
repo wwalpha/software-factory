@@ -47,6 +47,8 @@ Results, API errors and the thread ID are fsynced to the user-wide, mode-0600
 claim is made before server effects. Repeating `--create`, including after a
 crash, refuses to create another thread. Preserve this journal. A lost creation
 response is uncertain and must be reconciled manually, never blindly retried.
+The preflight checks every search-result page for an exact saved name match;
+`searchTerm` can also match another task's preview containing the probe name.
 The journal contains this probe's own prompt/reply and metadata, not credentials
 or other conversations. It is outside the repository and Codex profile.
 

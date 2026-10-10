@@ -31,7 +31,17 @@ createInterface({input:process.stdin}).on('line',line=>{
   if(m.method==='initialized')return;
   if(m.method==='initialize')result={codexHome:root,userAgent:'fixture'};
   else if(m.method==='project/list') result={data:[{id:'project-1',name:'Fixture',roots:[{path:root}]}],nextCursor:null};
-  else if(m.method==='thread/list') {let data=[];if(thread)data=[thread];result={data,nextCursor:null};}
+  else if(m.method==='thread/list') {
+    let data=[{id:'current-task',name:'Codex App Server Task PoC',preview:${JSON.stringify(PROBE_NAME)}}];
+    if(thread)data.push(thread);
+    if(mode==='duplicate-title')data.push({id:'existing-probe',name:${JSON.stringify(PROBE_NAME)}});
+    let nextCursor=null;
+    if(mode==='paginated-duplicate'){
+      if(m.params.cursor==='next')data=[{id:'existing-probe',name:${JSON.stringify(PROBE_NAME)}}];
+      else nextCursor='next';
+    }
+    result={data,nextCursor};
+  }
   else if(m.method==='thread/start') {
     thread={id:'thread-1',cwd:m.params.cwd,projectId:m.params.projectId,ephemeral:m.params.ephemeral,path:root+'/sessions/thread-1.jsonl',name:null,forkedFromId:null,parentThreadId:null,turns:[]};
     writeFileSync(saved,JSON.stringify(thread));
@@ -208,3 +218,17 @@ test('server launch error is recorded and cannot be replayed', async () => {
     await rm(f.root, { recursive: true, force: true });
   }
 });
+
+for (const mode of ['duplicate-title', 'paginated-duplicate']) {
+  test(`existing probe title (${mode}) stops before thread/start`, async () => {
+    const f = await fixture(mode);
+    try {
+      await assert.rejects(runProbe(f.options), /A probe already exists/);
+      const calls = await readFile(f.calls, 'utf8');
+      assert.ok(!calls.includes('thread/start'));
+      await assert.rejects(runProbe(f.options), /EEXIST/);
+    } finally {
+      await rm(f.root, { recursive: true, force: true });
+    }
+  });
+}
