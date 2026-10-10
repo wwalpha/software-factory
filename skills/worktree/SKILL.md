@@ -10,6 +10,27 @@ The maintained source is `skills/worktree/SKILL.md`;
 Follow repository `AGENTS.md` and `docs/agent-rules/common.md` in each task.
 This helper is independent of Factory Runtime, Builder, Guard and snapshots.
 
+## Default completion policy
+
+For implementation and modification requests, carry the task through commit,
+validation, local master merge and cleanup in the same run. Do not stop at a
+successful commit or ask for routine confirmation to merge/clean up. Honor an
+explicit user instruction to stop earlier or to leave the task unmerged.
+
+After committing inside `exec`, exit the development session to release its
+usage lock, then run `complete <id>` from the primary checkout. This is the default
+completion command; separate `test`, `merge` and `cleanup` commands are for
+inspection or recovery. Do not run `complete` while the task's `exec` is active.
+
+Stop if a command fails or a required human decision/approval is unresolved.
+Report the reason, current task state and remaining step; preserve the task and
+do not bypass failed validation, conflicts, permissions or ownership checks.
+
+Before reporting completion, run `status <id>` and verify `DONE`, the task commit
+is contained in local master, and task/candidate branches and worktrees are
+absent. Report the commit, validation, merge and cleanup results. A successful
+commit alone is not completion.
+
 ## Commands and lifecycle
 
 Use Node 24.21.0 and npm 11.19.0 on the same host. Start from any worktree of
@@ -20,14 +41,10 @@ so its implementation stays stable while task branches change it:
 ```sh
 REPO=/absolute/path/software-factory
 node "$REPO/dist/scripts/worktree.js" create task-001
-node "$REPO/dist/scripts/worktree.js" list
-node "$REPO/dist/scripts/worktree.js" status task-001
 node "$REPO/dist/scripts/worktree.js" exec task-001 -- sh
-node "$REPO/dist/scripts/worktree.js" test task-001
-node "$REPO/dist/scripts/worktree.js" merge task-001
-node "$REPO/dist/scripts/worktree.js" cleanup task-001
-node "$REPO/dist/scripts/worktree.js" recover task-001
+# Inside the task shell: edit, stage the scoped files, commit, then exit.
 node "$REPO/dist/scripts/worktree.js" complete task-001
+node "$REPO/dist/scripts/worktree.js" status task-001
 ```
 
 `status` and `recover` without an ID inspect/recover all registered tasks.
