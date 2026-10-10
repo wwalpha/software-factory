@@ -337,13 +337,12 @@ export const runProbe = async (options: ProbeOptions) => {
         const existing = object(
           await server.request('thread/list', {
             cwd,
-            searchTerm: PROBE_NAME,
             limit: 100,
             cursor,
             useStateDbOnly: true,
           }),
         );
-        // searchTerm also matches previews; only the saved name identifies this probe.
+        // Search filters can omit saved names; inspect names in every cwd page.
         assert.ok(
           array(existing.data)
             .map(object)
@@ -411,18 +410,29 @@ export const runProbe = async (options: ProbeOptions) => {
       );
     }
     assert.ok(threadId);
-    const listed = object(
-      await server.request('thread/list', {
-        cwd,
-        projectId,
-        searchTerm: PROBE_NAME,
-        limit: 100,
-        useStateDbOnly: true,
-      }),
-    );
-    const entries = array(listed.data)
-      .map(object)
-      .filter((thread) => thread.id === threadId);
+    const entries: Record<string, unknown>[] = [];
+    cursor = null;
+    do {
+      const listed = object(
+        await server.request('thread/list', {
+          cwd,
+          projectId,
+          limit: 100,
+          cursor,
+          useStateDbOnly: true,
+        }),
+      );
+      entries.push(
+        ...array(listed.data)
+          .map(object)
+          .filter((thread) => thread.id === threadId),
+      );
+      cursor = listed.nextCursor;
+      assert.ok(
+        cursor === null || typeof cursor === 'string',
+        'Invalid thread cursor',
+      );
+    } while (cursor !== null);
     assert.equal(entries.length, 1, 'Thread not saved in project listing');
     record('thread/list', { threadId, found: true, projectId });
     const result = verifyThread(

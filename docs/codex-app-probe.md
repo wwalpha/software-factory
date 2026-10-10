@@ -47,8 +47,9 @@ Results, API errors and the thread ID are fsynced to the user-wide, mode-0600
 claim is made before server effects. Repeating `--create`, including after a
 crash, refuses to create another thread. Preserve this journal. A lost creation
 response is uncertain and must be reconciled manually, never blindly retried.
-The preflight checks every search-result page for an exact saved name match;
-`searchTerm` can also match another task's preview containing the probe name.
+The preflight checks every cwd page for an exact saved name match. Verification
+checks every project page for the saved ID. Neither uses `searchTerm`: the
+installed CLI matches previews and can omit a separately saved task name.
 The journal contains this probe's own prompt/reply and metadata, not credentials
 or other conversations. It is outside the repository and Codex profile.
 
@@ -97,3 +98,23 @@ Offline tests use a separate fake stdio server and temporary files, never the re
 Codex profile. They cover creation, independent reads, duplicate refusal,
 uncertain effects, failed turns, unexpected replies/tools and profile mismatch.
 Full Factory Docker/live missions are outside this probe.
+
+## Device observation (2026-10-10)
+
+- CLI: `0.162.0-alpha.17.2` from the installed desktop bundle.
+- App: `26.1007.21159`, build `20052`; app/server were already running.
+- Profile: `/Users/macmini/.codex`, also opened by the desktop server.
+- Repository: `/Users/macmini/Documents/projects/software-factory`.
+- Canonical Project: `01a1217c-1033-72e0-9231-fc1b99c83785` (SoftwareFactory).
+- New Thread: `01a124ba-087f-7651-b0c9-4c8e1046a6e5` (Queue GUI Probe).
+- Turn: `01a124ba-0d45-7140-bacd-926597316a1d`, `completed`, exact expected reply,
+  one user message, one assistant message, no tool items.
+- initialize/initialized, thread/start, thread/name/set and turn/start succeeded.
+  Separate-server thread/list and thread/read succeeded after correcting the
+  search filter; persisted cwd, project, name and session path matched.
+- Exactly one real thread/start was sent. An earlier preflight attempt stopped
+  before creation. Both original error records were retained outside the repo.
+- GUI: UNVERIFIED. Computer Use refused access to the Codex application under its
+  safety policy. Sidebar visibility and GUI continuation require the manual
+  procedure above; no app restart was performed.
+- Queue adoption: pending GUI verification. API evidence alone is insufficient.
