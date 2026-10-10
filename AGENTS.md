@@ -56,21 +56,21 @@ context. Recorded results do not establish that the current checkout has passed.
 
 ## Rules Organization
 
-Keep this entry point concise. Future detailed coding rules may be separated into
-the following files under `docs/agent-rules/`:
+Keep this entry point concise. The
+[common development rules](docs/agent-rules/common.md) apply repository-wide.
+Detailed coding rules are organized under `docs/agent-rules/`:
 
-| Proposed file     | Intended responsibility                   |
-| ----------------- | ----------------------------------------- |
-| `common.md`       | Common development principles.            |
-| `nodejs.md`       | Node.js development conventions.          |
-| `typescript.md`   | TypeScript development conventions.       |
-| `architecture.md` | Architecture and module dependency rules. |
-| `testing.md`      | Testing and validation rules.             |
+| File                                    | Responsibility                            |
+| --------------------------------------- | ----------------------------------------- |
+| [common.md](docs/agent-rules/common.md) | Common development principles.            |
+| `nodejs.md`                             | Node.js development conventions.          |
+| `typescript.md`                         | TypeScript development conventions.       |
+| `architecture.md`                       | Architecture and module dependency rules. |
+| `testing.md`                            | Testing and validation rules.             |
 
-These are future locations, not required references or rules introduced by this
-file. No files in this proposed directory are created as part of the initial
-AGENTS.md introduction. When detailed rules are added, link the existing files
-here, identify their applicable scope, and avoid duplicating rules across files.
+The unlinked files remain proposed locations, not required references or active
+rules. When detailed rules are added, link the existing files here, identify their
+applicable scope, and avoid duplicating rules across files.
 
 ## Agent Execution Workflow
 
