@@ -20,12 +20,11 @@ childProcess.spawn = ((...args: Parameters<typeof spawn>) => {
   const trace = exits;
   const command = args[0];
   const first = args[1]?.[0] ?? '';
-  const channel =
-    command === process.execPath
-      ? first.endsWith('product-worker.js')
-        ? 'product'
-        : 'evaluator'
-      : `docker/${first}`;
+  let channel: string;
+  if (command === process.execPath) {
+    if (first.endsWith('product-worker.js')) channel = 'product';
+    else channel = 'evaluator';
+  } else channel = `docker/${first}`;
   child.on('close', (code, signal) => trace?.push({ channel, code, signal }));
   return child;
 }) as typeof spawn;
@@ -131,7 +130,8 @@ try {
           AbortSignal.timeout(60000),
         );
       } catch (e) {
-        result = { error: e instanceof Error ? e.message : String(e) };
+        if (e instanceof Error) result = { error: e.message };
+        else result = { error: String(e) };
       } finally {
         clearInterval(poll);
       }

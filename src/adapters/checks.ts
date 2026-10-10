@@ -22,7 +22,7 @@ const runtimeFiles = [
   'adapters/artifacts.js',
   'domain/invariants.js',
 ];
-async function runtimeSnapshot(): Promise<Tree> {
+const runtimeSnapshot = async (): Promise<Tree> => {
   const tree: Tree = {};
   for (const file of runtimeFiles)
     tree[`src/${file}`] = {
@@ -32,11 +32,11 @@ async function runtimeSnapshot(): Promise<Tree> {
       executable: false,
     };
   return tree;
-}
-async function checkSnapshot(
+};
+const checkSnapshot = async (
   root: string,
   check: Pick<CheckSpec, 'files' | 'kind'>,
-): Promise<Tree> {
+): Promise<Tree> => {
   const snapshot = await readTree(root);
   const files: Tree = {};
   ensure(
@@ -53,12 +53,12 @@ async function checkSnapshot(
     files[path] = snapshot[path]!;
   }
   return files;
-}
-function version(
+};
+const version = (
   check: Pick<CheckSpec, 'files' | 'kind'>,
   files: Tree,
   runtime: Tree,
-) {
+) => {
   const contents = Object.fromEntries(
     Object.entries(files).map(([path, file]) => [path, file.content]),
   );
@@ -68,17 +68,17 @@ function version(
     evaluator: PRODUCT_PROTOCOL,
     runtime,
   });
-}
-export async function checkVersion(
+};
+export const checkVersion = async (
   root: string,
   check: Pick<CheckSpec, 'files' | 'kind'>,
-): Promise<string> {
+): Promise<string> => {
   return version(
     check,
     await checkSnapshot(root, check),
     await runtimeSnapshot(),
   );
-}
+};
 export class ProtectedChecks implements CheckPort {
   constructor(private dockerImage: string | null = null) {}
   get dockerIsolated() {
@@ -127,13 +127,15 @@ export class ProtectedChecks implements CheckPort {
         const payload = {
           kind: check.kind,
           files: check.files,
-          compiler: this.dockerImage
-            ? '/factory/node_modules/typescript/bin/tsc'
-            : new URL(
-                '../../../node_modules/typescript/bin/tsc',
-                import.meta.url,
-              ).pathname,
+          compiler: '',
         };
+        if (this.dockerImage)
+          payload.compiler = '/factory/node_modules/typescript/bin/tsc';
+        else
+          payload.compiler = new URL(
+            '../../../node_modules/typescript/bin/tsc',
+            import.meta.url,
+          ).pathname;
         let output;
         let productFailed = false;
         if (check.kind === 'node-test') {
@@ -269,24 +271,27 @@ export class ProtectedChecks implements CheckPort {
         } catch {
           passed = false;
         }
-        results.push({
+        const result = {
           checkId: check.id,
           passed,
-          detail: passed
-            ? check.kind === 'node-test'
-              ? 'Protected assertions passed via external product calls'
-              : 'Trusted compiler passed'
-            : 'Protected check failed or returned incomplete results',
-        });
+          detail: 'Protected check failed or returned incomplete results',
+        };
+        if (passed) {
+          if (check.kind === 'node-test')
+            result.detail =
+              'Protected assertions passed via external product calls';
+          else result.detail = 'Trusted compiler passed';
+        }
+        results.push(result);
       }
       return results;
     } finally {
       // Read-only snapshots must be made removable without changing the operator originals.
-      async function writable(path: string): Promise<void> {
+      const writable = async (path: string): Promise<void> => {
         await chmod(path, 0o700);
         for (const entry of await readdir(path, { withFileTypes: true }))
           if (entry.isDirectory()) await writable(join(path, entry.name));
-      }
+      };
       await writable(root);
       await rm(root, { recursive: true, force: true });
     }

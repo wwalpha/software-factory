@@ -27,17 +27,17 @@ export type ProductResponse =
     }
   | { protocol: typeof PRODUCT_PROTOCOL; id: string; ok: false; error: string };
 
-export function productPath(path: string): void {
+export const productPath = (path: string): void => {
   ensure(
     safePath(path) && !/[:?#]/.test(path),
     'product-path',
     'Product module must be a safe candidate-relative path',
   );
-}
-export function productValue(
+};
+export const productValue: (
   value: unknown,
-  depth = 0,
-): asserts value is ProductValue {
+  depth?: number,
+) => asserts value is ProductValue = (value, depth = 0) => {
   ensure(depth <= 32, 'product-value', 'Product value exceeds depth limit');
   if (value === null || typeof value === 'string' || typeof value === 'boolean')
     return;
@@ -77,9 +77,10 @@ export function productValue(
       'Hidden or symbol properties are unsupported',
     );
   }
-  const keys = Array.isArray(value)
-    ? Array.from({ length: value.length }, (_, index) => String(index))
-    : Object.keys(value);
+  let keys: string[];
+  if (Array.isArray(value))
+    keys = Array.from({ length: value.length }, (_, index) => String(index));
+  else keys = Object.keys(value);
   for (const key of keys) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
     ensure(
@@ -89,11 +90,11 @@ export function productValue(
     );
     productValue(descriptor.value, depth + 1);
   }
-}
-export function exactObject(
+};
+export const exactObject: (
   value: unknown,
   keys: string[],
-): asserts value is Record<string, unknown> {
+) => asserts value is Record<string, unknown> = (value, keys) => {
   ensure(
     value &&
       typeof value === 'object' &&
@@ -103,10 +104,10 @@ export function exactObject(
     'product-protocol',
     'Invalid product message schema',
   );
-}
-export function productRequest(
+};
+export const productRequest: (
   value: unknown,
-): asserts value is ProductRequest {
+) => asserts value is ProductRequest = (value) => {
   exactObject(value, ['protocol', 'id', 'module', 'exportName', 'args']);
   ensure(
     value.protocol === PRODUCT_PROTOCOL &&
@@ -121,13 +122,13 @@ export function productRequest(
   );
   productPath(value.module);
   productValue(value.args);
-}
-export function productResponse(text: string, id: string): ProductResponse {
+};
+export const productResponse = (text: string, id: string): ProductResponse => {
   const value = productMessage(text);
-  const fields =
-    value && typeof value === 'object' && 'ok' in value && value.ok === true
-      ? ['protocol', 'id', 'ok', 'value']
-      : ['protocol', 'id', 'ok', 'error'];
+  let fields: string[];
+  if (value && typeof value === 'object' && 'ok' in value && value.ok === true)
+    fields = ['protocol', 'id', 'ok', 'value'];
+  else fields = ['protocol', 'id', 'ok', 'error'];
   exactObject(value, fields);
   ensure(
     value.protocol === PRODUCT_PROTOCOL &&
@@ -144,8 +145,8 @@ export function productResponse(text: string, id: string): ProductResponse {
       'Invalid product error',
     );
   return value as ProductResponse;
-}
-export function productMessage(text: string): unknown {
+};
+export const productMessage = (text: string): unknown => {
   ensure(
     Buffer.byteLength(text) <= MAX_MESSAGE_BYTES,
     'product-protocol',
@@ -163,12 +164,12 @@ export function productMessage(text: string): unknown {
     'Exactly one canonical JSON message required',
   );
   return value;
-}
-export function productBytes(bytes: Buffer): string {
+};
+export const productBytes = (bytes: Buffer): string => {
   ensure(
     bytes.length <= MAX_MESSAGE_BYTES,
     'product-protocol',
     'Product message too large',
   );
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-}
+};

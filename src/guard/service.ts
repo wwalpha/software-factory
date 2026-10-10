@@ -172,13 +172,13 @@ export class GuardService {
             payload: { id: row.id },
           },
         );
-      if (row.value.state === 'completed')
-        await this.store.settle(
-          row.id,
-          row.value.request.type === 'build'
-            ? (row.value.result as BuildResult).fact.usage.usd
-            : 0,
-        );
+      if (row.value.state === 'completed') {
+        const id = row.id;
+        let cost: number | null = 0;
+        if (row.value.request.type === 'build')
+          cost = (row.value.result as BuildResult).fact.usage.usd;
+        await this.store.settle(id, cost);
+      }
     }
     for (const row of await this.store.list<
       import('../domain/contracts.js').Experiment
@@ -214,7 +214,7 @@ export class GuardService {
     );
   }
   async info() {
-    return {
+    const info = {
       development: this.config.development,
       uid: (await stat(this.config.root)).uid,
       root: this.config.root,
@@ -224,11 +224,16 @@ export class GuardService {
         join(this.config.root, 'signing-key.pem'),
         join(this.config.root, 'guard.db'),
         ...this.config.projects.map((p) => p.checkRoot),
-        ...(this.config.policyFile ? [this.config.policyFile] : []),
       ],
-      ...(this.runner instanceof DockerRunner
-        ? await this.runner.probe()
-        : { dockerReady: false, imageVerified: false, credentials: false }),
+    };
+    if (this.config.policyFile) info.privatePaths.push(this.config.policyFile);
+    if (this.runner instanceof DockerRunner)
+      return { ...info, ...(await this.runner.probe()) };
+    return {
+      ...info,
+      dockerReady: false,
+      imageVerified: false,
+      credentials: false,
     };
   }
   async operator(method: string, params: unknown): Promise<unknown> {
@@ -657,8 +662,9 @@ export class GuardService {
           payload: { id: request.id },
         },
       );
-      const cost =
-        request.type === 'build' ? (result as BuildResult).fact.usage.usd : 0;
+      let cost: number | null = 0;
+      if (request.type === 'build')
+        cost = (result as BuildResult).fact.usage.usd;
       await this.store.settle(request.id, cost);
       return result;
     } catch (e) {
@@ -782,18 +788,25 @@ export class GuardService {
       for (const result of results) {
         const spec = profile.checks.find((c) => c.id === result.checkId);
         ensure(spec, 'check', 'Unregistered check');
-        const receipt = {
+        const identity = {
           id: randomUUID(),
           missionId: r.mission.id,
           targetDigest: r.targetDigest,
           inputDigest: digest({ mission: r.mission, checks: profile.checks }),
           checkId: spec.id,
           checkVersion: spec.version,
-          environment: this.config.development
-            ? 'fake-development-host'
-            : 'docker-isolated',
-          issuedAt: new Date().toISOString(),
-          result: result.passed ? ('pass' as const) : ('fail' as const),
+        };
+        let environment: string;
+        if (this.config.development) environment = 'fake-development-host';
+        else environment = 'docker-isolated';
+        const issuedAt = new Date().toISOString();
+        let outcome: EvidenceReceipt['result'] = 'fail';
+        if (result.passed) outcome = 'pass';
+        const receipt = {
+          ...identity,
+          environment,
+          issuedAt,
+          result: outcome,
           issuer: digest(this.publicKey),
         };
         const signed: EvidenceReceipt = {
@@ -849,20 +862,20 @@ export class GuardService {
         'evidence',
         receipt.id,
       );
-      ensure(
+      let valid =
         stored &&
-          canonical(stored.value) === canonical(receipt) &&
-          receipt.targetDigest === r.targetDigest &&
-          receipt.missionId === r.mission.id &&
-          receipt.inputDigest ===
-            digest({ mission: r.mission, checks: profile.checks }) &&
-          receipt.environment ===
-            (this.config.development
-              ? 'fake-development-host'
-              : 'docker-isolated'),
-        'evidence',
-        'Stale or forged evidence',
-      );
+        canonical(stored.value) === canonical(receipt) &&
+        receipt.targetDigest === r.targetDigest &&
+        receipt.missionId === r.mission.id &&
+        receipt.inputDigest ===
+          digest({ mission: r.mission, checks: profile.checks });
+      if (valid) {
+        const environment = receipt.environment;
+        if (this.config.development)
+          valid = environment === 'fake-development-host';
+        else valid = environment === 'docker-isolated';
+      }
+      ensure(valid, 'evidence', 'Stale or forged evidence');
       const spec = profile.checks.find((c) => c.id === receipt.checkId);
       ensure(
         spec &&
