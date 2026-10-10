@@ -40,6 +40,17 @@ createInterface({input:process.stdin}).on('line',line=>{
       if(m.params.cursor==='next')data=[{id:'existing-probe',name:${JSON.stringify(PROBE_NAME)}}];
       else nextCursor='next';
     }
+    if(mode==='paginated-success'){
+      if(m.params.cursor==='next'){
+        data=[];
+        if(thread)data=[thread];
+      }else{
+        data=[{id:'current-task',name:'Codex App Server Task PoC',preview:${JSON.stringify(PROBE_NAME)}}];
+        nextCursor='next';
+      }
+    }
+    // The installed CLI search matches previews, not an independently saved name.
+    if(m.params.searchTerm)data=data.filter(entry=>String(entry.preview??'').includes(m.params.searchTerm));
     result={data,nextCursor};
   }
   else if(m.method==='thread/start') {
@@ -232,3 +243,16 @@ for (const mode of ['duplicate-title', 'paginated-duplicate']) {
     }
   });
 }
+
+test('probe with a saved name absent from its preview is found on a later list page', async () => {
+  const f = await fixture('paginated-success');
+  try {
+    assert.equal((await runProbe(f.options)).api, 'PASS');
+    assert.equal(
+      (await runProbe({ ...f.options, create: false })).threadId,
+      'thread-1',
+    );
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});
