@@ -308,6 +308,33 @@ This change prevents the defined judge-interference cases; it does not prove
 complete correctness, prevent hardcoded responses or establish container escape
 resistance. Live eligibility still requires the separate deployment gates.
 
+## Builder Worker stdin regression (no model billing)
+
+Build the production Worker, then a **test-only** image replacing its Codex model
+adapter. Do not configure Guard/live execution with this fixture image.
+
+```sh
+docker build -f config/Dockerfile.worker -t software-factory-p1d-worker:local .
+docker build --build-arg WORKER_IMAGE=software-factory-p1d-worker:local \
+  -f tests/fixtures/Dockerfile.worker-input -t software-factory-p1d-fixture:local .
+WORKER_INPUT_IMAGE="$(docker image inspect software-factory-p1d-fixture:local --format '{{.Id}}')" \
+  npm run test:docker:stdin
+```
+
+No API key or external model call is needed. The production DockerRunner,
+process input/EOF handling and codex-worker input parser/validator run unchanged;
+only the model adapter in the fixture image is replaced. The regression takes
+about two minutes because it exercises the real 110-second Worker input deadline
+and 120-second Runner timeout, including container removal confirmation.
+Missing Docker/image fails explicitly, with no host/Fake fallback.
+
+Builder JSON envelopes have a **1 MiB byte limit** (including JSON escapes and
+attempt/recipe/binding overhead). Byte chunks are joined before strict UTF-8
+decoding; existing contracts validate each field before model startup. The
+existing Worker deadline now includes input waiting. No persisted schema changed.
+See [P1-D results and boundaries](docs/validation-p1-d.md). This does not establish
+real Codex/GPT success, live eligibility or completion of P0.
+
 ## Improvement, observation and rollback
 
 ```sh
@@ -350,7 +377,7 @@ of better GPT quality, lower human rescue time or real cost savings.
 | 5    | Cancelled mission                                               |
 
 `schema:generate`, `schema:check`, `typecheck`, `lint`, `format:check`, `build`,
-`test`, `test:integration`, `test:docker:checks`, `test:live` and `check` are available.
+`test`, `test:integration`, `test:docker:checks`, `test:docker:stdin`, `test:live` and `check` are available.
 `npm test` has no external LLM requests or credentials. Integration tests use real
 Git, SQLite, processes, local sockets and local SDK protocol fixtures.
 

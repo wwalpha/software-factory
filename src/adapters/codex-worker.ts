@@ -1,6 +1,6 @@
 import { createServer, request } from 'node:http';
 import { mkdir } from 'node:fs/promises';
-import type { Attempt, RoleRecipe, ModelBinding } from '../domain/contracts.js';
+import { readWorkerInput, type WorkerInput } from './worker-input.js';
 import {
   createCodex,
   CodexSession,
@@ -8,14 +8,16 @@ import {
   codexFailure,
 } from './codex.js';
 import { FactoryError } from '../domain/invariants.js';
-let data = '';
-for await (const chunk of process.stdin) data += String(chunk);
-const input: {
-  attempt: Attempt;
-  prompt: string;
-  recipe: RoleRecipe;
-  binding: ModelBinding;
-} = JSON.parse(data);
+import type { RunnerFact } from '../domain/contracts.js';
+const deadline = AbortSignal.timeout(110000);
+let input: WorkerInput;
+try {
+  input = await readWorkerInput(process.stdin, deadline);
+} catch {
+  process.stdin.destroy();
+  process.stderr.write('Worker input or startup failed; raw input omitted\n');
+  process.exit(2);
+}
 await mkdir('/tmp/codex-home', { recursive: true, mode: 0o700 });
 const server = createServer((req, res) => {
   const upstream = request(
@@ -54,7 +56,7 @@ try {
     input.recipe,
     input.binding,
     '/workspace',
-    AbortSignal.timeout(110000),
+    deadline,
   );
   process.stdout.write(
     JSON.stringify({
@@ -70,24 +72,20 @@ try {
     }) + '\n',
   );
 } catch (e) {
-  const code =
-    e instanceof FactoryError
-      ? e.code
-      : codexFailure(e instanceof Error ? e.message : 'failed');
-  const outcome = [
-    'auth-expired',
-    'rate-limited',
-    'refused',
-    'invalid-output',
-    'unknown-event',
-  ].includes(code)
-    ? (code as
-        | 'auth-expired'
-        | 'rate-limited'
-        | 'refused'
-        | 'invalid-output'
-        | 'unknown-event')
-    : 'failed';
+  let code: string = 'failed';
+  if (e instanceof FactoryError) code = e.code;
+  else if (e instanceof Error) code = codexFailure(e.message);
+  if (deadline.aborted) code = 'timeout';
+  let outcome: RunnerFact['outcome'] = 'failed';
+  switch (code) {
+    case 'timeout':
+    case 'auth-expired':
+    case 'rate-limited':
+    case 'refused':
+    case 'invalid-output':
+    case 'unknown-event':
+      outcome = code;
+  }
   process.stdout.write(
     JSON.stringify({
       claim: null,

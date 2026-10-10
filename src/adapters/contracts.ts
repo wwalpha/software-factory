@@ -36,6 +36,7 @@ export interface ContractMap {
   RoleRecipe: C.RoleRecipe;
   ProjectProfile: C.ProjectProfile;
   Models: C.Models;
+  ModelBinding: C.ModelBinding;
   RoleReport: C.RoleReport;
   RecipeProposal: C.RecipeProposal;
   Evaluation: C.Evaluation;
