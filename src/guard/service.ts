@@ -583,7 +583,7 @@ export class GuardService {
       state: 'pending',
       result: null,
     };
-    await this.store.commit(
+    const intent = await this.store.commit(
       [
         {
           kind: 'operation',
@@ -597,6 +597,11 @@ export class GuardService {
         topic: 'operation.intent',
         payload: { id: request.id },
       },
+    );
+    ensure(
+      !intent.duplicate,
+      'uncertain',
+      'Operation in flight or uncertain; reconcile first',
     );
     const controller = new AbortController();
     this.active.set(request.id, controller);

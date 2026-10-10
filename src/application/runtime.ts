@@ -196,7 +196,6 @@ export class Runtime {
         plan: null,
         planRevision: 0,
         work: {},
-        attempts: [],
         receipts: [],
         grantId: `grant-${id}-r${mission.revision}`,
       },
@@ -272,27 +271,116 @@ export class Runtime {
     };
   }
   private async operation<T>(request: OperationRequest): Promise<T> {
-    await this.store.commit(
-      [
+    const saved = await this.store.get<OperationRequest>(
+      'dispatch',
+      request.id,
+    );
+    if (saved)
+      ensure(
+        digest(saved.value) === digest(request),
+        'duplicate-conflict',
+        'Dispatch ID reused with different request',
+      );
+    else
+      await this.store.commit(
+        [
+          {
+            kind: 'dispatch',
+            id: request.id,
+            expectedVersion: 0,
+            value: request,
+          },
+        ],
+        {
+          id: `dispatch-${request.id}`,
+          topic: 'guard.dispatch',
+          payload: { id: request.id },
+        },
+      );
+    const result = await this.guard.operate<T>(request);
+    await this.store.ack(`dispatch-${request.id}`);
+    return result;
+  }
+  private async admit(
+    state: MissionState,
+    attempt: Attempt,
+    request: OperationRequest,
+  ): Promise<void> {
+    const event = {
+      id: `dispatch-${request.id}`,
+      topic: 'guard.dispatch',
+      payload: {
+        missionId: state.missionId,
+        id: request.id,
+        attemptId: attempt.id,
+      },
+    };
+    const write = this.writes.then(async () => {
+      const row = await this.store.get<MissionState>('state', state.missionId);
+      ensure(row, 'mission', 'Mission not found');
+      const snapshot = structuredClone(state);
+      snapshot.attempts = [
+        ...new Set([...row.value.attempts, ...snapshot.attempts, attempt.id]),
+      ];
+      snapshot.work[attempt.workItemId] = 'running';
+      const writes = [
+        {
+          kind: 'state',
+          id: state.missionId,
+          expectedVersion: row.version,
+          value: snapshot,
+        },
+        { kind: 'attempt', id: attempt.id, expectedVersion: 0, value: attempt },
         {
           kind: 'dispatch',
           id: request.id,
           expectedVersion: 0,
           value: request,
         },
-      ],
-      {
-        id: `dispatch-${request.id}`,
-        topic: 'guard.dispatch',
-        payload: { id: request.id },
-      },
+      ];
+      rejectSecrets({ writes, event }, this.secrets);
+      try {
+        await this.store.commit(writes, event, {
+          attemptId: attempt.id,
+          missionId: state.missionId,
+        });
+      } catch (error) {
+        // A lost commit reply must be reconciled with the same identities before dispatch.
+        const saved = await this.store.get<Attempt>('attempt', attempt.id);
+        const dispatch = await this.store.get<OperationRequest>(
+          'dispatch',
+          request.id,
+        );
+        const durable = await this.state(state.missionId);
+        if (
+          !saved ||
+          digest(saved.value) !== digest(attempt) ||
+          !dispatch ||
+          digest(dispatch.value) !== digest(request) ||
+          !durable.attempts.includes(attempt.id)
+        )
+          throw error;
+      }
+      state.attempts = snapshot.attempts;
+      state.work[attempt.workItemId] = 'running';
+    });
+    this.writes = write.then(
+      () => undefined,
+      () => undefined,
     );
-    const result = await this.guard.operate<T>(request);
-    await this.store.ack(`dispatch-${request.id}`);
-    return result;
+    await write;
   }
   async recover(id: string): Promise<MissionState> {
     const state = await this.state(id);
+    const mission = await this.mission(id);
+    state.attempts = [
+      ...new Set([
+        ...state.attempts,
+        ...(await this.store.list<Attempt>('attempt'))
+          .filter((a) => a.value.missionId === id)
+          .map((a) => a.id),
+      ]),
+    ];
     for (const attemptId of state.attempts) {
       const row = await this.store.get<Attempt>('attempt', attemptId);
       if (
@@ -303,10 +391,30 @@ export class Runtime {
       )
         continue;
       const attempt = row.value;
+      const dispatch = await this.store.get<OperationRequest>(
+        'dispatch',
+        attempt.operationId,
+      );
+      if (dispatch && dispatch.value.mission.revision !== mission.revision)
+        continue;
       const operation = await this.guard.call<OperationRecord | null>(
         'operationStatus',
         attempt.operationId,
       );
+      if (!operation && attempt.state === 'reserved') {
+        ensure(dispatch, 'recovery', 'Missing admitted dispatch');
+        try {
+          const result = await this.workers.run(
+            AbortSignal.timeout(120000),
+            () => this.operation<BuildResult>(dispatch.value),
+          );
+          await this.accept(state, row.version, attempt, result);
+        } catch (error) {
+          state.work[attempt.workItemId] = 'waiting';
+          state.waiting = this.waiting(error);
+        }
+        continue;
+      }
       if (operation?.state === 'completed') {
         const result = operation.result as BuildResult;
         ensure(
@@ -542,11 +650,6 @@ export class Runtime {
                   );
                 return { item, report };
               }
-              ensure(
-                state.attempts.length < mission.budget.maxAttempts,
-                'budget',
-                'Attempt budget exhausted',
-              );
               const previous = (
                 await this.store.list<Attempt>('attempt')
               ).filter(
@@ -567,7 +670,7 @@ export class Runtime {
                 leaseUntil: new Date(Date.now() + 120000).toISOString(),
                 baseDigest: treeDigest(base),
                 operationId,
-                state: 'running',
+                state: 'reserved',
                 waiting: null,
                 usage: {
                   certainty: 'unknown',
@@ -577,22 +680,6 @@ export class Runtime {
                 },
                 stopped: false,
               };
-              await this.store.reserve(
-                attemptId,
-                id,
-                item.budgetUsd,
-                mission.budget.maxUsd,
-              );
-              state.attempts.push(attemptId);
-              state.work[item.id] = 'running';
-              await this.save(state, 'attempt.started', [
-                {
-                  kind: 'attempt',
-                  id: attemptId,
-                  expectedVersion: 0,
-                  value: attempt,
-                },
-              ]);
               const release = await this.guard.call<FactoryRelease[]>(
                 'releaseStatus',
                 null,
@@ -617,12 +704,14 @@ export class Runtime {
                 id: operationId,
                 targetDigest: attempt.baseDigest,
               };
+              await this.admit(state, attempt, request);
               const result = await this.workers.run(controller.signal, () =>
                 this.operation<BuildResult>(request),
               );
               return { item, attempt, result };
             }),
           );
+          let budgetWaiting: Waiting | null = null;
           for (let index = 0; index < settled.length; index++) {
             const result = settled[index],
               item = runnable[index];
@@ -630,6 +719,11 @@ export class Runtime {
             if (result.status === 'rejected') {
               state.work[item.id] = 'waiting';
               state.waiting = this.waiting(result.reason);
+              if (
+                result.reason instanceof FactoryError &&
+                result.reason.code === 'budget'
+              )
+                budgetWaiting = state.waiting;
               continue;
             }
             if (
@@ -645,6 +739,7 @@ export class Runtime {
               );
             else state.work[item.id] = 'completed';
           }
+          if (budgetWaiting) state.waiting = budgetWaiting;
           await this.save(state, 'work.batch');
           continue;
         }
@@ -722,6 +817,9 @@ export class Runtime {
           controller.signal,
         );
         if (state.attempts.length >= mission.budget.maxAttempts) {
+          state.waiting = this.waiting(
+            new FactoryError('budget', 'Attempt budget exhausted'),
+          );
           state.status = 'failed';
           break;
         }
@@ -747,8 +845,11 @@ export class Runtime {
   private waiting(error: unknown): Waiting {
     const code =
       error instanceof FactoryError ? error.code : classifyProviderError(error);
+    let reason = code;
+    if (code === 'budget' && error instanceof Error)
+      reason = `budget: ${error.message}`;
     return {
-      reason: code,
+      reason,
       owner: [
         'grant',
         'binding',

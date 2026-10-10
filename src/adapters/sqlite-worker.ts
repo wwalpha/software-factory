@@ -2,12 +2,20 @@ import { parentPort, workerData } from 'node:worker_threads';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import type { Write, Event } from '../ports/store.js';
-import { ensure } from '../domain/invariants.js';
+import type { Write, Event, AttemptAdmission } from '../ports/store.js';
+import type { Attempt, MissionRevision } from '../domain/contracts.js';
+import type { OperationRequest } from '../ports/guard.js';
+import { ensure, FactoryError } from '../domain/invariants.js';
 type Request = { id: number } & (
   | { op: 'get'; kind: string; key: string }
   | { op: 'list'; kind: string }
-  | { op: 'commit'; writes: Write[]; event: Event; fault?: 'before' | 'after' }
+  | {
+      op: 'commit';
+      writes: Write[];
+      event: Event;
+      fault?: 'before' | 'after';
+      admission?: AttemptAdmission;
+    }
   | { op: 'pending' }
   | { op: 'ack'; key: string }
   | { op: 'close' }
@@ -42,6 +50,38 @@ function balance(account: string) {
     .get(account);
   return row;
 }
+const reserve = (
+  id: string,
+  account: string,
+  amount: number,
+  limit: number,
+): void => {
+  ensure(
+    Number.isFinite(amount) && amount > 0 && Number.isFinite(limit),
+    'budget',
+    'Invalid reservation',
+  );
+  const old = db.prepare('SELECT * FROM reservations WHERE id=?').get(id);
+  if (old) {
+    ensure(
+      old.account === account && old.amount === amount,
+      'duplicate-conflict',
+      'Reservation changed',
+    );
+    return;
+  }
+  const b = balance(account);
+  ensure(
+    b && Number(b.reserved) + Number(b.spent) + amount <= limit,
+    'budget',
+    'Budget exhausted',
+  );
+  db.prepare('INSERT INTO reservations(id,account,amount) VALUES(?,?,?)').run(
+    id,
+    account,
+    amount,
+  );
+};
 function transaction<T>(fn: () => T): T {
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -67,7 +107,13 @@ function execute(r: Request): unknown {
         .all(r.kind);
     case 'commit': {
       const hash = createHash('sha256')
-        .update(JSON.stringify({ writes: r.writes, event: r.event }))
+        .update(
+          JSON.stringify({
+            writes: r.writes,
+            event: r.event,
+            admission: r.admission,
+          }),
+        )
         .digest('hex');
       const result = transaction(() => {
         const seen = db
@@ -80,6 +126,53 @@ function execute(r: Request): unknown {
             'Event ID reused with different request',
           );
           return { duplicate: true };
+        }
+        if (r.admission) {
+          const { attemptId, missionId } = r.admission;
+          const missionRow = db
+            .prepare('SELECT value FROM records WHERE kind=? AND id=?')
+            .get('mission', missionId);
+          ensure(missionRow, 'mission', 'Mission not found');
+          const mission = JSON.parse(
+            String(missionRow.value),
+          ) as MissionRevision;
+          const attempt = r.writes.find(
+            (w) => w.kind === 'attempt' && w.id === attemptId,
+          )?.value as Attempt | undefined;
+          const state = r.writes.find(
+            (w) => w.kind === 'state' && w.id === missionId,
+          )?.value as
+            { attempts: string[]; work: Record<string, string> } | undefined;
+          const dispatch = r.writes.find(
+            (w) => w.kind === 'dispatch' && w.id === attempt?.operationId,
+          )?.value as OperationRequest | undefined;
+          ensure(
+            attempt &&
+              state &&
+              dispatch &&
+              attempt.missionId === missionId &&
+              dispatch.type === 'build' &&
+              dispatch.mission.id === missionId &&
+              JSON.stringify(dispatch.mission) === JSON.stringify(mission) &&
+              JSON.stringify(
+                (dispatch.payload as { attempt: Attempt }).attempt,
+              ) === JSON.stringify(attempt) &&
+              state.attempts.includes(attemptId) &&
+              state.work[attempt.workItemId] === 'running',
+            'admission',
+            'Incomplete attempt admission',
+          );
+          const count = db
+            .prepare(
+              "SELECT COUNT(*) count FROM records WHERE kind='attempt' AND json_extract(value,'$.missionId')=?",
+            )
+            .get(missionId);
+          ensure(
+            Number(count?.count) < mission.budget.maxAttempts,
+            'budget',
+            'Attempt budget exhausted',
+          );
+          reserve(attemptId, missionId, dispatch.amount, mission.budget.maxUsd);
         }
         for (const w of r.writes) {
           const old = db
@@ -117,31 +210,7 @@ function execute(r: Request): unknown {
       return null;
     case 'reserve':
       return transaction(() => {
-        ensure(
-          Number.isFinite(r.amount) && r.amount > 0 && Number.isFinite(r.limit),
-          'budget',
-          'Invalid reservation',
-        );
-        const old = db
-          .prepare('SELECT * FROM reservations WHERE id=?')
-          .get(r.key);
-        if (old) {
-          ensure(
-            old.account === r.account && old.amount === r.amount,
-            'duplicate-conflict',
-            'Reservation changed',
-          );
-          return null;
-        }
-        const b = balance(r.account);
-        ensure(
-          b && Number(b.reserved) + Number(b.spent) + r.amount <= r.limit,
-          'budget',
-          'Budget exhausted',
-        );
-        db.prepare(
-          'INSERT INTO reservations(id,account,amount) VALUES(?,?,?)',
-        ).run(r.key, r.account, r.amount);
+        reserve(r.key, r.account, r.amount, r.limit);
         return null;
       });
     case 'settle':
@@ -182,6 +251,7 @@ parentPort?.on('message', (r: Request) => {
     parentPort?.postMessage({
       id: r.id,
       error: e instanceof Error ? e.message : 'Database failure',
+      code: e instanceof FactoryError ? e.code : 'store',
     });
   }
 });

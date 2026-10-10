@@ -1,7 +1,13 @@
 import { Worker } from 'node:worker_threads';
 import { mkdir, statfs } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { PersistencePort, Stored, Write, Event } from '../ports/store.js';
+import type {
+  PersistencePort,
+  Stored,
+  Write,
+  Event,
+  AttemptAdmission,
+} from '../ports/store.js';
 import { ensure, FactoryError } from '../domain/invariants.js';
 export class SqliteStore implements PersistencePort {
   private failure: Error | null = null;
@@ -13,10 +19,11 @@ export class SqliteStore implements PersistencePort {
   private constructor(private worker: Worker) {
     worker.on(
       'message',
-      (m: { id: number; result: unknown; error?: string }) => {
+      (m: { id: number; result: unknown; error?: string; code?: string }) => {
         const waiter = this.pendingRequests.get(m.id);
         this.pendingRequests.delete(m.id);
-        if (m.error) waiter?.reject(new FactoryError('store', m.error));
+        if (m.error)
+          waiter?.reject(new FactoryError(m.code ?? 'store', m.error));
         else waiter?.resolve(m.result);
       },
     );
@@ -66,15 +73,20 @@ export class SqliteStore implements PersistencePort {
       (row) => ({ ...row, value: JSON.parse(row.value) }),
     );
   }
-  commit(writes: Write[], event: Event): Promise<{ duplicate: boolean }> {
-    return this.request({ op: 'commit', writes, event });
+  commit(
+    writes: Write[],
+    event: Event,
+    admission?: AttemptAdmission,
+  ): Promise<{ duplicate: boolean }> {
+    return this.request({ op: 'commit', writes, event, admission });
   }
   async faultCommit(
     writes: Write[],
     event: Event,
     fault: 'before' | 'after',
+    admission?: AttemptAdmission,
   ): Promise<void> {
-    await this.request({ op: 'commit', writes, event, fault });
+    await this.request({ op: 'commit', writes, event, fault, admission });
   }
   async pending(): Promise<Event[]> {
     return (

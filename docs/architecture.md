@@ -57,6 +57,16 @@ live in MissionState. State writes and their outbox event commit together with
 expected versions. Event identity includes a request digest: repeat deliveries
 are deduplicated, changed requests with the same ID are rejected.
 
+Builder admission uses one existing SQLite commit transaction to count all persisted
+Builder Attempts for the mission across revisions, reserve money, and save the
+Attempt, MissionState reference, dispatch request and outbox. The save queue only
+orders admission snapshots; the two work slots still execute independently.
+An admitted `reserved` Attempt keeps its identities through a lost commit reply or
+restart. Runtime confirms matching durable records before dispatch and consults
+Guard intent/result records before recovery. A duplicate Guard intent commit cannot
+start a second Runner. Older revision attempts remain charged but are not replayed
+as work for a new revision. See [P1-A validation](validation-p1-a.md).
+
 Before a Guard effect, its operation identity, request digest and budget
 reservation are durable. A completed identical request returns its prior result.
 A pending operation after a crash becomes uncertain, not automatically rerun.

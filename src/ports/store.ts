@@ -17,10 +17,18 @@ export interface Write {
   expectedVersion: number;
   value: unknown;
 }
+export interface AttemptAdmission {
+  attemptId: string;
+  missionId: string;
+}
 export interface PersistencePort {
   get<T = unknown>(kind: string, id: string): Promise<Stored<T> | null>;
   list<T = unknown>(kind: string): Promise<Stored<T>[]>;
-  commit(writes: Write[], event: Event): Promise<{ duplicate: boolean }>;
+  commit(
+    writes: Write[],
+    event: Event,
+    admission?: AttemptAdmission,
+  ): Promise<{ duplicate: boolean }>;
   pending(): Promise<Event[]>;
   ack(id: string): Promise<void>;
   reserve(
