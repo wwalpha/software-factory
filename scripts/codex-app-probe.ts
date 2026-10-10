@@ -332,19 +332,31 @@ export const runProbe = async (options: ProbeOptions) => {
     const projectId = string(project.id);
     record('project/list', { id: projectId, name: project.name, cwd });
     if (options.create) {
-      const existing = object(
-        await server.request('thread/list', {
-          cwd,
-          searchTerm: PROBE_NAME,
-          limit: 100,
-          useStateDbOnly: true,
-        }),
-      );
-      assert.equal(
-        array(existing.data).length,
-        0,
-        'A probe already exists; do not create another',
-      );
+      cursor = null;
+      do {
+        const existing = object(
+          await server.request('thread/list', {
+            cwd,
+            searchTerm: PROBE_NAME,
+            limit: 100,
+            cursor,
+            useStateDbOnly: true,
+          }),
+        );
+        // searchTerm also matches previews; only the saved name identifies this probe.
+        assert.ok(
+          array(existing.data)
+            .map(object)
+            .every((thread) => thread.name !== PROBE_NAME),
+          'A probe already exists; do not create another',
+        );
+        cursor = existing.nextCursor;
+        assert.ok(
+          cursor === null || typeof cursor === 'string',
+          'Invalid thread cursor',
+        );
+      } while (cursor !== null);
+      record('duplicate/check', { exactNameFound: false });
       const result = object(
         await server.request('thread/start', {
           cwd,
