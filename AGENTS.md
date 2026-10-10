@@ -74,6 +74,12 @@ applicable scope, and avoid duplicating rules across files.
 
 ## Agent Execution Workflow
 
+For parallel development of this repository, use the
+[worktree skill](skills/worktree/SKILL.md), also exposed at
+`.agents/skills/worktree`. Keep development inside the assigned worktree and use
+the helper's task usage lock; local master integration is serialized by the
+helper. This development lifecycle is separate from Factory mission execution.
+
 Understand → Inspect → Plan → Implement → Validate → Report
 
 1. **Understand:** Identify the requested outcome, scope, and constraints.

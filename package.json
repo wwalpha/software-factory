@@ -24,7 +24,9 @@
     "test:integration": "npm run build && node --test dist/tests/*.integration.test.js",
     "test:docker:checks": "npm run build && node --test dist/scripts/check-boundary-docker.js",
     "test:live": "npm run build && node dist/scripts/live.js",
-    "check": "npm run schema:check && npm run typecheck && npm run lint && npm run format:check && npm test"
+    "check": "npm run schema:check && npm run typecheck && npm run lint && npm run format:check && npm test",
+    "worktree": "node dist/scripts/worktree.js",
+    "test:worktree": "npm run build && node --test dist/tests/worktree.integration.test.js"
   },
   "dependencies": {
     "@openai/codex": "0.162.0",
