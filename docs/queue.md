@@ -118,36 +118,42 @@ not PASS. Do not use programmatic navigation as evidence of automatic sidebar re
 
 ## Recorded checks (2026-10-10)
 
-- Downloaded/extracted the requested GitHub master ZIP; scripts matched the initial
-  local checkout. No local work was overwritten.
-- Node 24.21.0 / npm 11.19.0; `npm run check`: 155 tests passed, zero failures/skips,
-  including 16 Queue cases and the existing Worktree/App Server probe regressions.
-- Skill Creator structural validation: PASS. Real `$queue` invocation, execution,
-  automatic chain and GUI verification are recorded after the explicit device run;
-  these offline results do not establish those outcomes.
-- Computer Use refused access to Codex (`com.openai.codex`) under its safety policy.
-  Native `/queue` recognition and GUI visibility/interaction remain UNVERIFIED.
+- Requested GitHub master ZIP was downloaded and extracted. Existing local changes
+  were preserved; implementation used the Worktree lifecycle, with no remote push.
+- Node 24.21.0 / npm 11.19.0; full `npm run check`: **163 PASS**, zero failures,
+  cancellations or skips. This includes 18 Queue cases and existing Worktree,
+  App Server PoC and Codex Adapter regressions. Skill structural validation passed.
+- Mock App Server coverage: T01–T12 and T15–T16, including four concurrent
+  completion processes with zero duplicate reservations, same-event deduplication,
+  save/create/connect/start/ID-save/turn failures, SIGKILL, stale locks, ambiguous
+  outcomes retained BLOCKED without replay, and failed Cleanup recovery.
+- Real E2E: starter `queue-e2e-1791627509307` → B `q-0003` → C `q-0004` → empty
+  Queue: **PASS**. B actually invoked `$queue`; C's stored prompt exactly matched
+  the invocation payload. Both used independent thread/start histories and their
+  own Worktrees. C's actual zero-exit tool receipts reported its directory/branch.
+- B thread: `01a12553-6049-7b70-837b-b6f336f2b4ba`; C thread:
+  `01a12554-df11-7b33-887f-0589d49f436c`. All three reached DONE; task and candidate
+  branches/worktrees were absent. The parent E2E observer was deliberately stopped
+  with SIGTERM (exit 143) while B was active. Detached B continued Cleanup and
+  started C, which completed independently: T16 device verification **PASS**.
+  A separate observer recovered the dead test lock and checked results without
+  starting another thread/turn. Evidence is retained externally in the existing
+  management directory as `queue-e2e-1791627509307.e2e.json` and
+  `queue-e2e-parent-exit.json`; ordinary npm checks never create real threads.
+- GUI visibility: the user confirmed `Queue q-0001` appears **outside the project
+  section**. App Server project assignment does not establish placement under the
+  desktop's saved project for external Worktrees. GUI interaction (T14) and native
+  `/queue` command recognition are **UNVERIFIED**. Computer Use refused Codex access
+  (`com.openai.codex`) under its safety policy; it was not bypassed. `$queue` skill
+  discovery and real registration passed, separately from GUI command selection.
 
-### Device invocation correction
-
-The first E2E starter and B completed Cleanup, but B interpreted the `$queue`
-payload's read-only/no-task wording as a current instruction and did not register C.
-That run is FAIL for chaining; its original item was not replayed. The normal
-`skills/list` API independently discovered the enabled repository Queue skill.
-An explicit Skill input plus instructions defining the invocation payload as data
-now accompanies the unchanged text. The E2E checker stops immediately if B finishes
-without registering C, rather than waiting out its deadline.
-
-The second device turn executed the payload instead of registering it. Its known
-thread/turn remained BLOCKED because App Server omits Skill metadata from persisted
-user messages. Verification now checks exact saved text and independent history;
-Skill dispatch remains checked at the request boundary. Static lifecycle developer
-instructions clarify that `$queue` payload is future-task data. The known completed
-turn can resume Cleanup through recovery without any new start/turn request.
-The user confirmed q-0001 is visible outside the project section; project placement
-is separate from visibility. GUI interaction and native slash recognition still
-require the user's device result.
-
-Legacy `thread/read` also omits nested tool execution items. The explicit E2E
-checker verifies zero-exit command receipts in the saved session log and rejects
-agent-only claims. No conversation log is passed to a newly started task.
+The first two device attempts failed chaining: the agent executed the `$queue`
+payload instead of registering it. Their prompts/identities were retained, never
+replayed. q-0001 completed Cleanup; q-0002's known completed turn safely recovered
+validation/Cleanup after a verification fix. App Server omits explicit Skill metadata
+and nested tool receipts from legacy thread/read. Dispatch still sends the formal
+Skill input; verification checks exact saved text/history, and E2E checks successful
+receipts from the saved session log. Static lifecycle developer instructions clarify
+that invocation payload is future-task data. No predecessor log or summary is passed
+to a new task. The corrected device run above establishes chaining; earlier failures
+remain recorded and are not reported as passes.
