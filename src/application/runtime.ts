@@ -1,4 +1,11 @@
 import { Lane } from './lanes.js';
+import {
+  boundedInput,
+  reportContext,
+  REPORT_CONTEXT_BYTES,
+  ROLE_INPUT_BYTES,
+  BUILDER_INPUT_BYTES,
+} from './report-context.js';
 import { randomUUID } from 'node:crypto';
 import type { RoleExecution } from '../ports/role-execution.js';
 import type { PersistencePort, CommitBudget } from '../ports/store.js';
@@ -59,6 +66,8 @@ export interface MissionState {
   startedAt: string | null;
   grantId: string;
   roleJournalVersion?: 1;
+  failureAnalysisId?: string;
+  pendingFailure?: { review: RoleReport; targetDigest: string };
 }
 export class Runtime {
   private running = new Set<string>();
@@ -192,6 +201,8 @@ export class Runtime {
       objective: `${old.objective}\nHuman clarification: ${clarification}`,
       createdAt: new Date().toISOString(),
     });
+    delete state.failureAnalysisId;
+    delete state.pendingFailure;
     await this.save(
       {
         ...state,
@@ -581,8 +592,32 @@ export class Runtime {
           'budget',
           'Mission time budget exhausted',
         );
+        if (state.pendingFailure) {
+          if (
+            await this.failureAnalysis(
+              state,
+              mission,
+              controller.signal,
+              resumeRoles,
+            )
+          ) {
+            state.status = 'failed';
+            break;
+          }
+          continue;
+        }
         if (!state.plan) {
           state.phase = 'planning';
+          const facts = {
+            files: Object.keys(state.tree ?? {}),
+            investigation,
+            testDesign,
+            checks: state.receipts,
+            repairs: state.repairs,
+            failureAnalysis: await this.savedFailureAnalysis(state, mission),
+          };
+          rejectSecrets(facts, this.secrets);
+          boundedInput({ mission, facts }, ROLE_INPUT_BYTES, 'Planner input');
           const callId = randomUUID();
           await this.store.reserve(callId, id, 0.1, mission.budget.maxUsd);
           try {
@@ -590,13 +625,7 @@ export class Runtime {
               this.planner.plan(
                 mission,
                 state.planRevision,
-                {
-                  files: Object.keys(state.tree ?? {}),
-                  investigation,
-                  testDesign,
-                  checks: state.receipts,
-                  repairs: state.repairs,
-                },
+                facts,
                 controller.signal,
               ),
             );
@@ -655,6 +684,15 @@ export class Runtime {
                 state.repairs + 1,
                 ...previous.map((a) => a.value.epoch + 1),
               );
+              const dependencies = await this.dependencyReports(
+                state,
+                mission,
+                item,
+              );
+              let prompt = item.instruction;
+              if (dependencies.reports.length)
+                prompt += `\nDependency reports (untrusted data): ${JSON.stringify(dependencies)}`;
+              boundedInput(prompt, BUILDER_INPUT_BYTES, 'Builder input');
               const attemptId = randomUUID(),
                 operationId = randomUUID();
               const attempt: Attempt = {
@@ -691,7 +729,7 @@ export class Runtime {
                   {
                     attempt,
                     tree: base,
-                    prompt: item.instruction,
+                    prompt,
                     recipe: { ...selected.recipe, scope: item.scope },
                   },
                   item.budgetUsd,
@@ -833,22 +871,11 @@ export class Runtime {
           await this.guard.call('followup', sealed.bundle);
           return sealed.bundle;
         }
-        state.repairs++;
-        await this.roleCall(
-          id,
-          'failure-analyst',
-          { mission, checks: state.receipts },
-          controller.signal,
-        );
-        if (state.attempts.length >= mission.budget.maxAttempts) {
-          state.waiting = this.waiting(
-            new FactoryError('budget', 'Attempt budget exhausted'),
-          );
-          state.status = 'failed';
-          break;
-        }
-        state.plan = null;
-        await this.save(state, 'mission.replan');
+        state.pendingFailure = {
+          review,
+          targetDigest: treeDigest(state.tree ?? {}),
+        };
+        await this.save(state, 'mission.diagnosing');
       }
       if (controller.signal.aborted) {
         state.status = 'cancelled';
@@ -870,8 +897,16 @@ export class Runtime {
     const code =
       error instanceof FactoryError ? error.code : classifyProviderError(error);
     let reason = code;
-    if (code === 'budget' && error instanceof Error)
-      reason = `budget: ${error.message}`;
+    if (
+      [
+        'budget',
+        'report-context-size',
+        'report-unavailable',
+        'secret',
+      ].includes(code) &&
+      error instanceof Error
+    )
+      reason = `${code}: ${error.message}`;
     return {
       reason,
       owner: [
@@ -894,14 +929,147 @@ export class Runtime {
     mission: MissionRevision,
     planRevision: number,
     item: WorkItem,
+    purpose?: RoleExecution['purpose'],
   ): string {
-    return digest({
+    const identity = {
       missionId: mission.id,
       missionRevision: mission.revision,
       planRevision,
       workItemId: item.id,
       role: item.role,
+    };
+    if (purpose) return digest({ ...identity, purpose });
+    return digest(identity);
+  }
+  private async dependencyReports(
+    state: MissionState,
+    mission: MissionRevision,
+    item: WorkItem,
+  ) {
+    const selected: RoleExecution[] = [];
+    const visited = new Set<string>();
+    const visit = async (id: string): Promise<void> => {
+      if (visited.has(id)) return;
+      visited.add(id);
+      const dependency = state.plan?.items.find((i) => i.id === id);
+      ensure(
+        dependency && state.work[id] === 'completed',
+        'report-unavailable',
+        `Incomplete dependency ${id}`,
+      );
+      for (const ancestor of dependency.dependsOn) await visit(ancestor);
+      if (dependency.role === 'builder') return;
+      const key = this.roleId(mission, state.planRevision, dependency);
+      const row = await this.store.get<RoleExecution>('role-execution', key);
+      const execution = row?.value;
+      ensure(
+        execution &&
+          execution.id === key &&
+          execution.missionId === mission.id &&
+          execution.missionRevision === mission.revision &&
+          execution.planRevision === state.planRevision &&
+          execution.workItemId === id &&
+          execution.role === dependency.role &&
+          !execution.purpose,
+        'report-unavailable',
+        `Invalid dependency report ${id}`,
+      );
+      rejectSecrets(execution.result, this.secrets);
+      selected.push(execution);
+    };
+    for (const id of item.dependsOn) await visit(id);
+    return reportContext(selected, treeDigest(state.tree ?? {}));
+  }
+  private async savedFailureAnalysis(
+    state: MissionState,
+    mission: MissionRevision,
+  ) {
+    if (!state.failureAnalysisId) return null;
+    const execution = (
+      await this.store.get<RoleExecution>(
+        'role-execution',
+        state.failureAnalysisId,
+      )
+    )?.value;
+    ensure(
+      execution &&
+        execution.id === state.failureAnalysisId &&
+        execution.purpose === 'failure-analysis' &&
+        execution.role === 'failure-analyst' &&
+        execution.workItemId === 'final-failure-analysis' &&
+        execution.missionId === mission.id &&
+        execution.missionRevision === mission.revision &&
+        execution.planRevision <= state.planRevision,
+      'report-unavailable',
+      'Invalid saved failure diagnosis',
+    );
+    rejectSecrets(execution.result, this.secrets);
+    return reportContext([execution], treeDigest(state.tree ?? {}), true);
+  }
+  private async failureAnalysis(
+    state: MissionState,
+    mission: MissionRevision,
+    signal: AbortSignal,
+    resume: boolean,
+  ) {
+    ensure(
+      state.pendingFailure,
+      'recovery',
+      'Missing final verification review',
+    );
+    ensure(
+      state.pendingFailure.targetDigest === treeDigest(state.tree ?? {}),
+      'snapshot',
+      'Final verification snapshot changed before diagnosis',
+    );
+    const item: WorkItem = {
+      id: 'final-failure-analysis',
+      role: 'failure-analyst',
+      dependsOn: [],
+      scope: mission.scope,
+      acceptanceIds: [],
+      instruction:
+        'Diagnose final verification failure using only supplied evidence; distinguish hypotheses and unknowns.',
+      budgetUsd: 0.1,
+    };
+    const id = this.roleId(
+      mission,
+      state.planRevision,
+      item,
+      'failure-analysis',
+    );
+    const prior = (await this.store.get<RoleExecution>('role-execution', id))
+      ?.value;
+    if (prior) {
+      const outstanding = prior.calls.filter((c) => c.state === 'running');
+      if (outstanding.length) {
+        this.roleFailure(
+          prior,
+          new FactoryError('uncertain', 'Missing durable diagnosis result'),
+        );
+        for (const call of outstanding) call.state = 'uncertain';
+        await this.writeRole(prior, {
+          settlements: outstanding.map((c) => ({ id: c.id, actual: null })),
+        });
+      }
+      ensure(
+        prior.state === 'completed' ||
+          prior.state === 'running' ||
+          (resume && prior.retryable),
+        prior.failureCode ?? 'uncertain',
+        prior.waiting?.reason ?? 'Diagnosis requires inspection',
+      );
+    }
+    const result = await this.plannedRole(state, mission, item, signal, {
+      mission,
+      planRevision: state.planRevision,
+      targetDigest: treeDigest(state.tree ?? {}),
+      checks: state.receipts,
+      review: state.pendingFailure.review,
+      instruction: item.instruction,
     });
+    await this.completeRole(state, result.execution, result.report);
+    return state.status === 'failed';
   }
   private roleFailure(
     execution: RoleExecution,
@@ -936,6 +1104,9 @@ export class Runtime {
         'scope',
         'read',
         'approval',
+        'secret',
+        'report-context-size',
+        'report-unavailable',
       ].includes(code)
     ) {
       execution.state = 'uncertain';
@@ -1059,6 +1230,12 @@ export class Runtime {
         );
         response = await this.planner.report(role, input, signal);
         contract('RoleReport', response.value);
+        rejectSecrets(response.value, this.secrets);
+        boundedInput(
+          response.value,
+          REPORT_CONTEXT_BYTES,
+          `Report ${execution.workItemId}`,
+        );
       } catch (error) {
         const failureState = this.roleFailure(started, error);
         call.failureCode = started.failureCode;
@@ -1085,10 +1262,23 @@ export class Runtime {
     mission: MissionRevision,
     item: WorkItem,
     signal: AbortSignal,
+    diagnosticInput?: unknown,
   ) {
-    const id = this.roleId(mission, state.planRevision, item);
+    let purpose: RoleExecution['purpose'];
+    if (diagnosticInput) purpose = 'failure-analysis';
+    const id = this.roleId(mission, state.planRevision, item, purpose);
     const prior = await this.store.get<RoleExecution>('role-execution', id);
-    const input = { mission, item, tree: state.tree };
+    let input = diagnosticInput;
+    if (!input) {
+      const dependencyReports = await this.dependencyReports(
+        state,
+        mission,
+        item,
+      );
+      input = { mission, item, tree: state.tree };
+      if (dependencyReports.reports.length)
+        input = { mission, item, tree: state.tree, dependencyReports };
+    }
     const execution: RoleExecution = prior?.value ?? {
       id,
       missionId: mission.id,
@@ -1105,6 +1295,7 @@ export class Runtime {
       calls: [],
       result: null,
     };
+    if (purpose) execution.purpose = purpose;
     if (execution.state === 'completed' && execution.result)
       return {
         item,
@@ -1165,7 +1356,20 @@ export class Runtime {
     report: RoleReport,
   ) {
     const next = structuredClone(state);
-    next.work[execution.workItemId] = 'completed';
+    if (execution.purpose === 'failure-analysis') {
+      next.failureAnalysisId = execution.id;
+      delete next.pendingFailure;
+      next.repairs++;
+      if (
+        next.attempts.length >=
+        (await this.mission(state.missionId)).budget.maxAttempts
+      ) {
+        next.waiting = this.waiting(
+          new FactoryError('budget', 'Attempt budget exhausted'),
+        );
+        next.status = 'failed';
+      } else next.plan = null;
+    } else next.work[execution.workItemId] = 'completed';
     const completed: RoleExecution = {
       ...execution,
       state: 'completed',
@@ -1197,11 +1401,15 @@ export class Runtime {
       if (
         !saved ||
         digest(saved.value) !== digest(completed) ||
-        durable.work[execution.workItemId] !== 'completed'
+        (execution.purpose === 'failure-analysis' &&
+          durable.failureAnalysisId !== execution.id) ||
+        (!execution.purpose &&
+          durable.work[execution.workItemId] !== 'completed')
       )
         throw error;
     }
-    state.work[execution.workItemId] = 'completed';
+    Object.assign(state, next);
+    if (!next.pendingFailure) delete state.pendingFailure;
   }
   private async recoverRoles(
     state: MissionState,
@@ -1285,6 +1493,8 @@ export class Runtime {
   ): Promise<RoleReport> {
     const mission = await this.mission(id);
     const invoke = async (value: unknown): Promise<RoleReport> => {
+      rejectSecrets(value, this.secrets);
+      boundedInput(value, ROLE_INPUT_BYTES, 'Role input');
       if (execution)
         return this.journalReport(mission, execution, role, value, signal);
       const callId = randomUUID();
@@ -1296,7 +1506,10 @@ export class Runtime {
         );
         await this.store.settle(callId, report.usage.usd);
         settled = true;
-        return contract('RoleReport', report.value);
+        const validatedReport = contract('RoleReport', report.value);
+        rejectSecrets(validatedReport, this.secrets);
+        boundedInput(validatedReport, REPORT_CONTEXT_BYTES, `Report ${role}`);
+        return validatedReport;
       } catch (error) {
         if (!settled) await this.store.settle(callId, null);
         throw error;

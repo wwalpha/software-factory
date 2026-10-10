@@ -80,10 +80,49 @@ rechecks existing Guard snapshot authority and the mission money/time bounds.
 Permanent failures, approval holds and unknown outcomes require human inspection
 and the existing mission revision/operator grant path. Cancelled missions remain
 terminal. The journal is internal persisted state, not model-authored authority;
-it neither consumes Builder Attempts nor forwards reports to other roles/plans.
+it does not consume Builder Attempts. P1-C forwards its successful reports as
+untrusted data to dependent work and saved final failure diagnoses to replanning.
 New plans carry an optional roleJournalVersion. Never-started legacy ready states
 can adopt it; missing histories in previously active legacy work wait for human
 resolution instead of being replayed. See [P1-B validation](validation-p1-b.md).
+
+P1-C selects only completed non-Builder ancestors of the consumer's `dependsOn`
+DAG, including transitive ancestors through Builders, once per producer. It uses
+exact mission/revision/plan/item/role keys and matching successful final calls;
+it never queries all report history for prompt input. Builder receives the full
+selected content in the existing guarded prompt, and planned roles receive it in
+`dependencyReports`. Runtime attaches execution/call IDs, input/snapshot/result
+digests, mission and plan revisions, item, role and purpose. Reports on a different
+tree are explicitly historical; even same-tree `facts` remain model reports.
+
+Final verification failure saves receipts, the review used in that decision and
+its target digest before diagnosis. Failure Analyst reuses the P1-B journal and
+budget transactions with a distinct `failure-analysis` purpose. Diagnosis completion,
+the state reference, repair count and replan transition commit together. Recovery
+can reuse a saved response before completion, or a completed diagnosis before
+planning, without regenerating it. Pending diagnosis refuses a changed verification
+tree. Only the latest referenced diagnosis from the same mission revision enters
+`planner.plan.facts.failureAnalysis`, explicitly historical to its failed plan/tree.
+Human revision clears those references. Existing explicit retry/uncertain rules
+remain in force, including for the final analyst.
+
+Individual report JSON and each full report context are limited to 64 KiB. Whole
+role input (including a bounded authorized-read round) and planner mission/facts
+are limited to 1 MiB; Builder prompt JSON is limited to 128 KiB. Bounds use UTF-8
+bytes of `JSON.stringify`, before provider/Runner dispatch. An oversized report is
+not saved as a successful result. An oversized aggregate stops with item IDs,
+actual/maximum bytes and an explicit nothing-omitted reason; it does not truncate
+or summarize mandatory information. Limits exclude fixed SDK schema/recipe wrapper
+bytes and Builder tree transport, which retain their existing adapter boundaries.
+
+No public model/Guard/Runner schema or SQLite migration is needed. Old P1-B report
+keys remain identical and optional state/purpose fields are absent in old data.
+Independent role inputs keep their old shape; legacy successful final calls remain
+resolvable. Missing legacy histories retain the P1-B operator hold. Old unsaved
+analyses cannot be recovered retroactively. Guard authority, signed acceptance and
+sealing are independent of report text/approval. Existing secret rejection,
+redaction and read-scope checks still apply. See [P1-C measurements and regression
+coverage](validation-p1-c.md).
 
 Before a Guard effect, its operation identity, request digest and budget
 reservation are durable. A completed identical request returns its prior result.
