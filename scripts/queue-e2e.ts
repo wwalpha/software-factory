@@ -52,6 +52,10 @@ const main = async () => {
       );
       const failed = items.find((item) => item.status === 'BLOCKED');
       assert.ok(!failed, `E2E blocked: ${JSON.stringify(failed)}`);
+      assert.ok(
+        !(items.length === 1 && items[0]?.status === 'DONE'),
+        'B finished without registering C; skill invocation was not verified',
+      );
       if (items.length === 2 && items.every((item) => item.status === 'DONE'))
         break;
       assert.ok(

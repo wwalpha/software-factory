@@ -543,3 +543,28 @@ test('Worktree creation conflict retains prompt and does not call App Server', a
     await f.close();
   }
 });
+
+test('formal $queue input loads the Skill and preserves conflicting payload as exact text', async () => {
+  const f = await fixture();
+  try {
+    const a = await f.done('a');
+    const prompt = '$queue Remain read-only and do not create tasks.\n保存対象';
+    await f.queue.enqueue(prompt);
+    await f.queue.handoff(a);
+    await until(async () => (await f.queue.status())[0]?.status === 'DONE');
+    const turn = (await callList(f.calls)).find(
+      (call) => call.method === 'turn/start',
+    );
+    assert.deepEqual(turn?.params?.input, [
+      { type: 'text', text: prompt, text_elements: [] },
+      {
+        type: 'skill',
+        name: 'queue',
+        path: join(f.manager.root, 'queue-q-0001', 'skills/queue/SKILL.md'),
+      },
+    ]);
+    assert.equal((await f.queue.status())[0]?.prompt, prompt);
+  } finally {
+    await f.close();
+  }
+});
