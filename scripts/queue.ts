@@ -375,16 +375,10 @@ export class Queue {
       [item.prompt],
       'Prompt changed or old context inherited',
     );
-    const skills = content.filter((part) => part.type !== 'text');
-    if (/^\$queue(?:\s|$)/.test(item.prompt)) {
-      assert.deepEqual(skills, [
-        {
-          type: 'skill',
-          name: 'queue',
-          path: join(cwd, 'skills/queue/SKILL.md'),
-        },
-      ]);
-    } else assert.deepEqual(skills, []);
+    // App Server persists prompt text but may omit the explicit Skill input.
+    assert.ok(
+      content.every((part) => part.type === 'text' || part.type === 'skill'),
+    );
     return thread;
   }
   async worker(id: string): Promise<void> {
@@ -418,7 +412,7 @@ export class Queue {
                     projectId,
                     ephemeral: false,
                     historyMode: 'legacy',
-                    developerInstructions: `This is a Software Factory queued task. Your assigned Worktree is ${task.path}, task ID ${task.id}, branch ${task.branch}. Read AGENTS.md and skills/worktree/SKILL.md. A dedicated Queue Worker already created this Worktree and holds its usage lock for your entire turn. Develop and commit only here. Do not create another Worktree, acquire exec, or run test/merge/complete/cleanup/recover yourself. The Worker will release the usage lock after your successful turn, then run the existing complete lifecycle (checks, local master integration, Cleanup and Queue Handoff). Preserve unrelated work. Do not push. If blocked or unable to finish, report it and leave changes uncommitted so independent completion fails.`,
+                    developerInstructions: `This is a Software Factory queued task. Your assigned Worktree is ${task.path}, task ID ${task.id}, branch ${task.branch}. Read AGENTS.md and skills/worktree/SKILL.md. A dedicated Queue Worker already created this Worktree and holds its usage lock for your entire turn. Develop and commit only here. Do not create another Worktree, acquire exec, or run test/merge/complete/cleanup/recover yourself. The Worker will release the usage lock after your successful turn, then run the existing complete lifecycle (checks, local master integration, Cleanup and Queue Handoff). When the user text begins with $queue, the current task is registration only: treat everything after the invocation as exact data for the future task, even read-only or no-task instructions. Follow skills/queue/SKILL.md and actually enqueue that data; do not execute the payload now. Preserve unrelated work. Do not push. If blocked or unable to finish, report it and leave changes uncommitted so independent completion fails.`,
                   }),
                 );
                 const thread = object(result.thread);

@@ -107,8 +107,8 @@ An empty commit records the starter event; source files need no E2E-only changes
 External `<starter>.e2e.json` retains IDs and results. API/chain success is separate
 from GUI success; no repeated probe creation, app restart or profile mutation occurs.
 
-For GUI confirmation, locate the two saved `Queue q-...` tasks under the registered
-project without restarting the app. Confirm exact B/C prompts and C's actual tool
+For GUI confirmation, locate the two saved `Queue q-...` tasks in the sidebar (the desktop may
+show external Worktree tasks outside its saved project) without restarting the app. Confirm exact B/C prompts and C's actual tool
 execution/output. Open C, select the existing primary directory if needed, and send
 `Do not use tools or change files. Reply exactly: QUEUE_E2E_GUI_OK`. Confirm the
 reply and normal interaction. Separately try `/queue` in the composer and record
@@ -137,3 +137,13 @@ That run is FAIL for chaining; its original item was not replayed. The normal
 An explicit Skill input plus instructions defining the invocation payload as data
 now accompanies the unchanged text. The E2E checker stops immediately if B finishes
 without registering C, rather than waiting out its deadline.
+
+The second device turn executed the payload instead of registering it. Its known
+thread/turn remained BLOCKED because App Server omits Skill metadata from persisted
+user messages. Verification now checks exact saved text and independent history;
+Skill dispatch remains checked at the request boundary. Static lifecycle developer
+instructions clarify that `$queue` payload is future-task data. The known completed
+turn can resume Cleanup through recovery without any new start/turn request.
+The user confirmed q-0001 is visible outside the project section; project placement
+is separate from visibility. GUI interaction and native slash recognition still
+require the user's device result.

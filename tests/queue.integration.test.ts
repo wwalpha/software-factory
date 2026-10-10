@@ -92,7 +92,7 @@ readline.createInterface({input:process.stdin}).on('line',async line=>{
  } else if(m.method==='thread/name/set'){thread.name=p.name;result={};}
  else if(m.method==='turn/start'){
   const id=randomUUID();
-  const turn={id,status:'inProgress',items:[{type:'userMessage',content:p.input}]};
+  const turn={id,status:'inProgress',items:[{type:'userMessage',content:p.input.filter(part=>part.type==='text')}]};
   thread.turns=[turn];
   fs.writeFileSync(join(root,thread.id+'.json'),JSON.stringify(thread));
   if(mode()==='lost-turn')process.exit(2);
@@ -563,6 +563,13 @@ test('formal $queue input loads the Skill and preserves conflicting payload as e
         path: join(f.manager.root, 'queue-q-0001', 'skills/queue/SKILL.md'),
       },
     ]);
+    const start = (await callList(f.calls)).find(
+      (call) => call.method === 'thread/start',
+    );
+    assert.match(
+      String(start?.params?.developerInstructions),
+      /registration only/,
+    );
     assert.equal((await f.queue.status())[0]?.prompt, prompt);
   } finally {
     await f.close();
