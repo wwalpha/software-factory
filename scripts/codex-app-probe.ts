@@ -19,7 +19,7 @@ export const PROBE_NAME = 'Queue GUI Probe';
 export const PROBE_REPLY = 'QUEUE_GUI_PROBE_APP_SERVER_OK';
 export const PROBE_PROMPT = `This is a read-only connectivity probe. Do not use any tools, read files, modify source code, settings, sessions, or credentials, or create other tasks. Reply with exactly: ${PROBE_REPLY}`;
 
-const object = (value: unknown): Record<string, unknown> => {
+export const object = (value: unknown): Record<string, unknown> => {
   assert.ok(
     typeof value === 'object' && value !== null && !Array.isArray(value),
     'Expected an object',
@@ -27,17 +27,17 @@ const object = (value: unknown): Record<string, unknown> => {
   // The object check establishes the JSON record boundary; values remain unknown.
   return value as Record<string, unknown>;
 };
-const string = (value: unknown): string => {
+export const string = (value: unknown): string => {
   assert.ok(typeof value === 'string', 'Expected a string');
   return value;
 };
-const array = (value: unknown): unknown[] => {
+export const array = (value: unknown): unknown[] => {
   assert.ok(Array.isArray(value), 'Expected an array');
   return value;
 };
 
 // runProcess closes stdin after one payload; App Server requires an interactive stream.
-class AppServer {
+export class AppServer {
   private child;
   private lines;
   private closed;
@@ -57,6 +57,7 @@ class AppServer {
     args: string[],
     cwd: string,
     timeoutMs: number,
+    private serverRequestMessage = 'Probe refuses server requests',
   ) {
     this.child = spawn(executable, args, {
       cwd,
@@ -79,10 +80,10 @@ class AppServer {
             pending.reject(new Error(JSON.stringify(message.error)));
           else pending.resolve(message.result);
         } else if (message.id !== undefined) {
-          // Reject tool/approval requests; the probe has no tool authority.
+          // Never grant tool/approval authority on behalf of the operator.
           this.send({
             id: message.id,
-            error: { code: -32601, message: 'Probe refuses server requests' },
+            error: { code: -32601, message: this.serverRequestMessage },
           });
           this.fail(
             new Error(`Unexpected server request: ${String(message.method)}`),
@@ -113,6 +114,9 @@ class AppServer {
         ),
       );
     }, timeoutMs);
+  }
+  get pid() {
+    return this.child.pid;
   }
   private fail(error: Error) {
     this.failure ??= error;

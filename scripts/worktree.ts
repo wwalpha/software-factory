@@ -837,7 +837,7 @@ export class Worktrees {
     this.validateId(id);
     this.initialize();
     if (operation === 'create') return this.create(id);
-    return this.withLock(
+    const result = await this.withLock(
       `${id}.lock`,
       operation === 'recover',
       async (lock) => {
@@ -884,6 +884,16 @@ export class Worktrees {
         }
       },
     );
+    // Handoff runs only after both usage and repository locks have been released.
+    if (
+      result.status === 'DONE' &&
+      ['complete', 'merge', 'cleanup', 'recover'].includes(operation) &&
+      existsSync(join(this.root, 'queue.json'))
+    ) {
+      const { Queue } = await import('./queue.js');
+      await new Queue(this).handoff(result);
+    }
+    return result;
   }
   async status(id: string) {
     const task = this.load(id);
