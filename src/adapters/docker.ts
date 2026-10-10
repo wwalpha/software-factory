@@ -151,11 +151,15 @@ export class DockerRunner implements RunnerPort {
       recipe.budgetUsd,
     );
     let stopped = false;
+    let detail = 'Worker failed or was interrupted; raw output omitted';
     try {
       const output = await runProcess(
         'docker',
         [
           'run',
+          '-i',
+          '--label',
+          'factory.builder-worker=true',
           '--name',
           this.name(attempt.operationId),
           '--init',
@@ -194,8 +198,13 @@ export class DockerRunner implements RunnerPort {
       );
       stopped = await this.stop(attempt.operationId);
       ensure(stopped, 'uncertain', 'Container stop not confirmed');
-      const observed = contract('RunnerFact', JSON.parse(output.stdout).fact);
+      combined.throwIfAborted();
+      if (output.code === 125)
+        detail = 'Docker startup failed; raw output omitted';
+      else if (output.code !== 0)
+        detail = 'Worker exited unsuccessfully; raw output omitted';
       ensure(output.code === 0, 'runner', 'Worker failed');
+      const observed = contract('RunnerFact', JSON.parse(output.stdout).fact);
       if (observed.outcome !== 'completed')
         return { tree, fact: { ...observed, stopped: true } };
       const result = contract('AgentClaim', JSON.parse(output.stdout).claim);
@@ -228,7 +237,7 @@ export class DockerRunner implements RunnerPort {
                 ? 'timeout'
                 : 'failed'
             : 'uncertain',
-          'Worker failed or was interrupted; raw output omitted',
+          detail,
           stopped,
         ),
       };
