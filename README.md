@@ -384,3 +384,10 @@ Git, SQLite, processes, local sockets and local SDK protocol fixtures.
 See [architecture](docs/architecture.md), [dependencies](docs/dependencies.md),
 [validation](docs/validation.md) and the recorded
 [implementation order](docs/implementation-plan.md).
+
+## Prompt Queue
+
+Use `$queue <exact prompt>` to register future work. Successful Worktree Cleanup
+starts at most one independent Codex task per DONE event. Registration does not
+start anything. Build the primary helper first; see [Queue operation and explicit
+E2E](docs/queue.md) for storage, recovery and GUI verification limits.

@@ -31,6 +31,23 @@ is contained in local master, and task/candidate branches and worktrees are
 absent. Report the commit, validation, merge and cleanup results. A successful
 commit alone is not completion.
 
+## Queued tasks and completion handoff
+
+A Queue Worker may assign an already created worktree in thread developer
+instructions. In that case the Worker holds the task usage lock during the entire
+agent turn: develop and commit in that assigned worktree, without acquiring `exec`
+or running completion yourself. After the turn it releases the usage lock and
+runs the existing `complete` lifecycle. Do not create a second worktree. Unresolved
+work must remain uncommitted so independent validation stops completion.
+
+Successful `complete`, `merge`, `cleanup` and `recover` paths that verify DONE
+check the Queue only after releasing task/repository locks. Worktree/branch absence
+and tested integration are rechecked. One persisted DONE event can reserve at most
+one prompt, including when retried. An empty Queue is a no-op. Queue launch failure
+leaves Worktree DONE intact and retains the prompt for explicit Queue recovery.
+Use the built helper from the primary checkout; queued workers never launch from
+an already deleted worktree. See [Queue operation](../../docs/queue.md).
+
 ## Commands and lifecycle
 
 Use Node 24.21.0 and npm 11.19.0 on the same host. Start from any worktree of
