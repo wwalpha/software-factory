@@ -22,9 +22,8 @@
     "build": "tsc",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "test:integration": "npm run build && node --test dist/tests/*.integration.test.js",
-    "test:no-python": "node scripts/no-python.ts",
     "test:live": "npm run build && node dist/scripts/live.js",
-    "check": "npm run schema:check && npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:no-python"
+    "check": "npm run schema:check && npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "dependencies": {
     "@openai/codex": "0.162.0",

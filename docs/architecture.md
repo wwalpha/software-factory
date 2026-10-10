@@ -152,9 +152,9 @@ in-flight work, without pretending to undo product or external data.
 
 ## Residual risks and limits
 
-Live isolation, real account bindings, Linux execution and the clean no-Python
-container were not exercised on the initial machine because Docker was not
-running. The implementation fails closed; readiness is not claimed. macOS Docker
+Live isolation and real account bindings remain unverified; see validation.md for
+executed checks and missing prerequisites. The implementation fails closed;
+readiness is not claimed. macOS Docker
 Desktop's VM and Linux Docker have different UID/mount behavior and both require
 an operator-run doctor/live test. Docker daemon access, host root, the installed
 Guard, its image and operator identities remain trusted. OS/container escape and

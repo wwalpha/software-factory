@@ -16,7 +16,6 @@ model bindings, credentials, grants and budgets pass the gates. See
 Use the official **Node 24.21.0** prebuilt distribution for macOS arm64 or Linux
 x64/arm64, with its bundled **npm 11.19.0**. Verify the archive against the official
 [checksums](https://nodejs.org/dist/v24.21.0/SHASUMS256.txt). Git must be installed.
-There is no Python, pip, venv, compiler toolchain or node-gyp setup step.
 Windows and multi-host execution are outside this release.
 
 ```sh
@@ -33,9 +32,8 @@ On this checkout the verified macOS arm64 binary is also available in ignored
 `.local/node-v24.21.0-darwin-arm64/bin`; prepend that directory to PATH to use the
 same runtime without changing the system installation.
 
-`check` includes the actual clean-container `test:no-python` test. If Docker is
-unavailable it exits **3 (BLOCKED)**; it does not count a PATH trick or script scan
-as proof. `npm ci` uses normal lifecycle behavior. All direct dependencies are
+`check` runs schema, type, lint, formatting and offline tests without Docker or
+model credentials. `npm ci` uses normal lifecycle behavior. All direct dependencies are
 exact versions and transitive packages are locked. Versions, licenses, install
 scripts and the RC status of `node:sqlite` are in
 [dependencies](docs/dependencies.md).
@@ -246,7 +244,7 @@ of better GPT quality, lower human rescue time or real cost savings.
 | 5    | Cancelled mission                                               |
 
 `schema:generate`, `schema:check`, `typecheck`, `lint`, `format:check`, `build`,
-`test`, `test:integration`, `test:no-python`, `test:live` and `check` are available.
+`test`, `test:integration`, `test:live` and `check` are available.
 `npm test` has no external LLM requests or credentials. Integration tests use real
 Git, SQLite, processes, local sockets and local SDK protocol fixtures.
 

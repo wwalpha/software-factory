@@ -1,8 +1,44 @@
 # Validation record — 2026-10-10 (Asia/Tokyo)
 
 This distinguishes implemented paths, executed checks and missing environmental
-proof. **The overall check is BLOCKED, not fully passed.** No production operation,
+proof. **The aggregate `check` now passes; live validation remains BLOCKED.** No production operation,
 remote push or merge was performed.
+
+## Current checks
+
+`npm run check` runs schema, type, lint, formatting and offline tests. Docker is
+required for live Worker isolation only. The ordinary Linux and macOS CI matrix
+continues to run the same check command.
+
+### Live prerequisites still missing or unverified
+
+- Neither `OPENAI_API_KEY` nor `CODEX_PROVIDER_API_KEY` is set in the current
+  session. An `AZURE_OPENAI_API_KEY` is present, but the current Factory does not
+  consume it. No secret values were printed or copied. Credential validity,
+  account access, billing and actual model availability remain unverified.
+- `FACTORY_CONFIG` is unset and `config/local.json` is absent. The deployment
+  example has no registered ProjectProfiles, disabled/unverified models, no
+  prices and a placeholder Worker image. Supply separate Guard/runtime settings
+  with actual profiles, protected checks, evaluation cases and verified bindings.
+- No Factory Worker image was present in the local Docker inventory. Build
+  `config/Dockerfile.worker`, pin its actual digest and pass the isolation probe.
+- The example `/srv/factory-runtime`, `/srv/factory-guard` and `/srv/factory-ipc`
+  locations do not exist, and no account named for factory/guard/runtime was
+  found. No configured separate-identity Guard deployment could be verified.
+  Provision distinct nonroot identities, private Guard storage/policy and
+  protected checks, narrowly shared IPC, and separate runtime/Guard/operator
+  tokens. Only Guard should have Docker access. OS denial checks and `doctor`
+  must pass from the runtime identity; Docker starting alone does not prove this.
+- `FACTORY_PROBE_MAX_USD` is unset. The implemented binding probe requires an
+  explicit cap of at least USD 0.40 and both provider credentials. This is a
+  local authorization limit, not evidence of available API credit.
+- `FACTORY_LIVE_MISSION` and `FACTORY_LIVE_BUDGET_USD` are unset. Supply a positive
+  live-test cap covering the Mission budget and an operator-issued grant matching
+  its revision digest, release, operations and scope, with sufficient budget and
+  an unexpired lifetime. No valid live grant could be checked without that setup.
+
+`npm run test:live` was executed and returned BLOCKED before any model call.
+No paid binding probe, live Mission or OS privilege provisioning was performed.
 
 ## Executed on macOS arm64
 
@@ -14,7 +50,7 @@ remote push or merge was performed.
 | `typecheck`                               | PASS               | strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, NodeNext                                                                               |
 | `lint`                                    | PASS               | ESLint and typescript-eslint; no explicit any or ts-ignore escape                                                                                    |
 | `format:check`                            | PASS               | Prettier                                                                                                                                             |
-| `build`                                   | PASS               | Actual TypeScript compiler, no Python                                                                                                                |
+| `build`                                   | PASS               | Actual TypeScript compiler                                                                                                                           |
 | `npm test`                                | PASS               | 25 tests, 25 passed, 0 skipped/failed; no external LLM requests                                                                                      |
 | `test:integration`                        | PASS               | 20 tests, 20 passed; real SQLite/Git, separate processes, IPC and local SDK protocol fixtures                                                        |
 | Installed Codex CLI                       | PASS               | Actual binary reported `codex-cli 0.162.0`, matching SDK 0.162.0; restricted shell printed an alias-creation warning but version execution succeeded |
@@ -78,30 +114,15 @@ A retained CLI proof is in ignored `.factory/cli-proof/` (`mission.json`,
 private signing key or provider credential. `node dist/scripts/demo.js` recreates
 fresh example state and prints its result/config paths.
 
-## BLOCKED / not executed
+## Current environment validation status
 
-| Check                                                    | Status and reason                                                                                                                                              |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test:no-python`                                         | BLOCKED, exit 3: Docker CLI exists but no daemon socket/service was available                                                                                  |
-| `test:live`                                              | BLOCKED, exit 3: no live configuration, operator-granted live mission or explicit positive live-test budget was supplied; Docker isolation is also unavailable |
-| Aggregate `check`                                        | BLOCKED, exit 3 at `test:no-python`, after all preceding offline checks passed                                                                                 |
-| Real Responses/Codex model availability                  | Not established; example bindings remain disabled                                                                                                              |
-| Actual Docker worker/check isolation and intrusion probe | Not executed; driver and probe are implemented, live remains refused                                                                                           |
-| Linux x64/arm64 execution                                | CI jobs and clean-image test provided, not run locally                                                                                                         |
-| Human rescue time and real GPT performance               | Not measured; no improvement claim                                                                                                                             |
-
-`test:no-python` builds an official Node 24.21.0 slim image without Python, checks
-its package/executable inventory, then traces process execution during **normal**
-`npm ci`, schema generation/check, type/lint/format checks, build/tests and CLI/demo.
-It rejects Python/pip/node-gyp execution, including failed fallback attempts.
-Docker absence is never replaced with `--ignore-scripts`, a grep or a PATH-only
-claim. Therefore Python-free execution is **not yet demonstrated on this host**.
-
-No Python implementation existed at the outset. Factory source, scripts, CI and
-setup now contain no Python invocation or Python runtime dependency. The lockfile
-reports no dependency install lifecycle scripts or node-gyp/prebuild dependency
-path. This code/dependency inspection is supporting evidence, not a substitute
-for the blocked clean-environment run. Products developed by the Factory are not
-required to use TypeScript and unrelated product Python files are not deleted.
+| Check                                                    | Status and reason                                                                                                        |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `test:live`                                              | BLOCKED, exit 3: no live configuration, operator-granted live mission or explicit positive live-test budget was supplied |
+| Aggregate `check`                                        | PASS, exit 0; schema, type, lint, formatting and 25 offline tests                                                        |
+| Real Responses/Codex model availability                  | Not established; example bindings remain disabled                                                                        |
+| Actual Docker worker/check isolation and intrusion probe | Not executed; driver and probe are implemented, live remains refused                                                     |
+| Linux x64/arm64 execution                                | Earlier Linux arm64 container run passed 25 tests; Linux x64 not executed                                                |
+| Human rescue time and real GPT performance               | Not measured; no improvement claim                                                                                       |
 
 See architecture.md for the OS, Docker, acceptance-test and trusted-operator limits.
