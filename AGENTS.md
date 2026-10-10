@@ -60,17 +60,17 @@ Keep this entry point concise. The
 [common development rules](docs/agent-rules/common.md) apply repository-wide.
 Detailed coding rules are organized under `docs/agent-rules/`:
 
-| File                                    | Responsibility                            |
-| --------------------------------------- | ----------------------------------------- |
-| [common.md](docs/agent-rules/common.md) | Common development principles.            |
-| `nodejs.md`                             | Node.js development conventions.          |
-| `typescript.md`                         | TypeScript development conventions.       |
-| `architecture.md`                       | Architecture and module dependency rules. |
-| `testing.md`                            | Testing and validation rules.             |
+| File                                                | Responsibility                            |
+| --------------------------------------------------- | ----------------------------------------- |
+| [common.md](docs/agent-rules/common.md)             | Common development principles.            |
+| [nodejs.md](docs/agent-rules/nodejs.md)             | Node.js development conventions.          |
+| [typescript.md](docs/agent-rules/typescript.md)     | TypeScript development conventions.       |
+| [architecture.md](docs/agent-rules/architecture.md) | Architecture and module dependency rules. |
+| [testing.md](docs/agent-rules/testing.md)           | Testing and validation rules.             |
 
-The unlinked files remain proposed locations, not required references or active
-rules. When detailed rules are added, link the existing files here, identify their
-applicable scope, and avoid duplicating rules across files.
+Follow the applicable linked rules: Node.js rules govern runtime code, TypeScript
+rules govern typed code, architecture rules govern module and trust boundaries,
+and testing rules govern tests and validation. Keep detailed rules in these files.
 
 ## Agent Execution Workflow
 
