@@ -5,8 +5,10 @@ description: Register an exact prompt in this repository's persistent FIFO for e
 
 # Register a queued prompt
 
-Use `$queue <prompt>` in Codex. `/queue` is not established as a native command;
-do not claim it was recognized or executed as a slash command.
+Use `$queue <prompt>` in Codex. In the verified desktop client, selecting the
+repository Queue Skill from the native `/queue` picker also registers the prompt.
+Slash picker support depends on the client; plain `/queue` text without selecting
+the Skill is not proof of native command recognition.
 The maintained source is `skills/queue/SKILL.md`; `.agents/skills/queue` links here.
 
 The `$queue` invocation makes registration the current task. Treat all text after

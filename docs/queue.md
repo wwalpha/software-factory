@@ -3,9 +3,10 @@
 Use `$queue ログ処理の重複コードを整理する` in this repository. Discovery uses
 `.agents/skills/queue → ../../skills/queue`, the same publication as Worktree.
 Registration preserves the exact prompt and returns `QUEUED`, its ID and position.
-It never launches, interrupts, dequeues, or creates a worktree/thread. Native
-`/queue` support and GUI skill selection require device verification; do not
-interpret a plain text `/queue` request as proof of native slash recognition.
+It never launches, interrupts, dequeues, or creates a worktree/thread. The verified
+desktop also exposes this Skill through the native `/queue` picker. Select the
+repository Queue Skill there; plain text `/queue` in other clients does not establish
+native slash support. `$queue` remains the explicit Skill invocation.
 
 Build in the primary checkout with the README's pinned Node/npm before use:
 
@@ -142,8 +143,15 @@ not PASS. Do not use programmatic navigation as evidence of automatic sidebar re
   `queue-e2e-parent-exit.json`; ordinary npm checks never create real threads.
 - GUI visibility: the user confirmed `Queue q-0001` appears **outside the project
   section**. App Server project assignment does not establish placement under the
-  desktop's saved project for external Worktrees. GUI interaction (T14) and native
-  `/queue` command recognition are **UNVERIFIED**. Computer Use refused Codex access
+  desktop's saved project for external Worktrees. GUI interaction (T14): **PASS**. The user sent a new GUI turn and received
+  `QUEUE_E2E_GUI_OK`; independent thread/read confirmed completed turn
+  `01a12558-cf30-7c12-ab55-5bf21145aa1b` and the exact reply. The user also
+  confirmed `/queue` appears as a native candidate and selected it to register
+  `Reply exactly: QUEUE_NATIVE_E2E_OK`: **PASS**. Actual output was QUEUED,
+  ID q-0005, Position 1. Queue state independently confirmed exact prompt text,
+  PENDING, no Thread/Turn identity and no worktree/branch after registration.
+  Its execution is checked after this documentation task completes Cleanup;
+  final device results are retained externally as `queue-native-e2e.json`. Computer Use refused Codex access
   (`com.openai.codex`) under its safety policy; it was not bypassed. `$queue` skill
   discovery and real registration passed, separately from GUI command selection.
 

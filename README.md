@@ -387,7 +387,8 @@ See [architecture](docs/architecture.md), [dependencies](docs/dependencies.md),
 
 ## Prompt Queue
 
-Use `$queue <exact prompt>` to register future work. Successful Worktree Cleanup
+Use `$queue <exact prompt>` to register future work; the verified desktop also
+exposes the repository Skill in its native `/queue` picker. Successful Worktree Cleanup
 starts at most one independent Codex task per DONE event. Registration does not
 start anything. Build the primary helper first; see [Queue operation and explicit
 E2E](docs/queue.md) for storage, recovery and GUI verification limits.
