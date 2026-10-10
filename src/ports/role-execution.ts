@@ -7,6 +7,7 @@ import type {
 
 // Runtime-owned journal; agent output supplies only RoleReport and Usage.
 export interface RoleExecution {
+  purpose?: 'failure-analysis';
   id: string;
   missionId: string;
   missionRevision: number;

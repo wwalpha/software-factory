@@ -106,6 +106,12 @@ reused. Unknown outcomes and missing legacy histories require inspection, a huma
 mission revision and its matching operator grant; `authorize-retry` below remains
 a Builder operation command. See [P1-B behavior and validation](docs/validation-p1-b.md).
 
+Successful planned role reports now reach dependent Builders and roles through
+transitive plan dependencies, with Runtime-owned provenance and explicit historical
+snapshot labels. Saved final failure diagnoses reach replanning after restart.
+These reports remain untrusted data; input-size overflow stops visibly rather than
+silently omitting required reports. See [P1-C contracts and measurements](docs/validation-p1-c.md).
+
 After a crash, the daemon reconciles running missions against Guard records.
 Heartbeat expiry alone cannot replace a worker. An uncertain isolated build
 requires confirmed stop and a separate operator action before a fresh Attempt:
