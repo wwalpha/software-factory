@@ -1,6 +1,6 @@
 ---
 name: worktree
-description: Develop Software Factory itself in isolated local Git worktrees, validate commits, serialize integration into local master, and recover or clean up completed tasks. Use for parallel repository development; Factory missions and remote Git operations are outside this skill.
+description: Develop Software Factory itself in isolated local Git worktrees, validate commits, serialize integration into local master, and recover or clean up completed tasks. Use for repository implementation and modifications, whether working alone or in parallel; read-only investigations, Factory missions and remote Git operations are outside this skill.
 ---
 
 # Software Factory development worktrees

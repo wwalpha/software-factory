@@ -74,11 +74,13 @@ and testing rules govern tests and validation. Keep detailed rules in these file
 
 ## Agent Execution Workflow
 
-For parallel development of this repository, use the
-[worktree skill](skills/worktree/SKILL.md), also exposed at
-`.agents/skills/worktree`. Keep development inside the assigned worktree and use
-the helper's task usage lock; local master integration is serialized by the
-helper. This development lifecycle is separate from Factory mission execution.
+For all implementation and modification work in this repository, whether working
+alone or in parallel, read and use the [worktree skill](skills/worktree/SKILL.md)
+before editing. It is also exposed at `.agents/skills/worktree`. Develop and commit
+only inside the assigned worktree, using the helper's task usage lock; local
+master integration is serialized by the helper. A request to use the current
+working tree as the source baseline does not authorize editing the primary or
+master checkout directly. This lifecycle is separate from Factory mission execution.
 
 Understand → Inspect → Plan → Implement → Validate → Report
 
