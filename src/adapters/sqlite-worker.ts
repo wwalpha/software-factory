@@ -48,14 +48,14 @@ db.exec(
 db.exec(
   readFileSync(new URL('../../../migrations/001.sql', import.meta.url), 'utf8'),
 );
-function balance(account: string) {
+const balance = (account: string) => {
   const row = db
     .prepare(
       'SELECT COALESCE(SUM(CASE WHEN settled=0 THEN amount ELSE 0 END),0) reserved, COALESCE(SUM(CASE WHEN settled=1 THEN COALESCE(actual,amount) ELSE 0 END),0) spent, COALESCE(SUM(unknown),0) unknown FROM reservations WHERE account=?',
     )
     .get(account);
   return row;
-}
+};
 const reserve = (
   id: string,
   account: string,
@@ -107,7 +107,7 @@ const settle = (id: string, actual: number | null): null => {
   ).run(actual, unknown, id);
   return null;
 };
-function transaction<T>(fn: () => T): T {
+const transaction = <T>(fn: () => T): T => {
   db.exec('BEGIN IMMEDIATE');
   try {
     const out = fn();
@@ -117,8 +117,8 @@ function transaction<T>(fn: () => T): T {
     db.exec('ROLLBACK');
     throw e;
   }
-}
-function execute(r: Request): unknown {
+};
+const execute = (r: Request): unknown => {
   switch (r.op) {
     case 'get':
       return (
@@ -255,15 +255,16 @@ function execute(r: Request): unknown {
       db.close();
       return null;
   }
-}
+};
 parentPort?.on('message', (r: Request) => {
   try {
     parentPort?.postMessage({ id: r.id, result: execute(r) });
   } catch (e) {
-    parentPort?.postMessage({
-      id: r.id,
-      error: e instanceof Error ? e.message : 'Database failure',
-      code: e instanceof FactoryError ? e.code : 'store',
-    });
+    if (parentPort) {
+      const response = { id: r.id, error: 'Database failure', code: 'store' };
+      if (e instanceof Error) response.error = e.message;
+      if (e instanceof FactoryError) response.code = e.code;
+      parentPort.postMessage(response);
+    }
   }
 });

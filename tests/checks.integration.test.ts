@@ -9,26 +9,26 @@ import { digest, type Tree } from '../src/adapters/artifacts.js';
 import { runProcess } from '../src/adapters/process.js';
 import type { ProjectProfile } from '../src/domain/contracts.js';
 
-function productTree(source: string, module = 'range.ts'): Tree {
+const productTree = (source: string, module = 'range.ts'): Tree => {
   return {
     [module]: {
       content: Buffer.from(source).toString('base64'),
       executable: false,
     },
   };
-}
-async function registeredTest(
+};
+const registeredTest = async (
   profile: ProjectProfile,
   source: string,
   file = 'probe.test.mjs',
-) {
+) => {
   await writeFile(join(profile.checkRoot, file), source);
   const spec = { id: 'probe', kind: 'node-test' as const, files: [file] };
   return {
     ...profile,
     checks: [{ ...spec, version: await checkVersion(profile.checkRoot, spec) }],
   };
-}
+};
 const invocationTest = `import test from 'node:test'; import assert from 'node:assert/strict'; import {callProduct} from 'factory:product'; test('observation', async()=>assert.equal(await callProduct('range.ts','clamp',[-5,0,10]),0));`;
 
 // These host fixtures attempt only JavaScript mutations/pipe output, never filesystem/process attacks.

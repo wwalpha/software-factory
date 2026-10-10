@@ -11,10 +11,10 @@ import {
   type ProductValue,
 } from './product-protocol.js';
 
-async function observation(
+const observation = async (
   request: unknown,
   id: string,
-): Promise<ProductValue> {
+): Promise<ProductValue> => {
   const socketPath = process.env.PRODUCT_CALL_SOCKET;
   ensure(
     socketPath,
@@ -39,14 +39,14 @@ async function observation(
     socket.on('end', () => resolve(Buffer.concat(chunks)));
   });
   const result = productResponse(productBytes(response), id);
-  ensure(result.ok, 'product-error', result.ok ? '' : result.error);
+  if (!result.ok) ensure(result.ok, 'product-error', result.error);
   return result.value;
-}
-export async function callProduct(
+};
+export const callProduct = async (
   module: string,
   exportName: string,
   args: ProductValue[],
-): Promise<ProductValue> {
+): Promise<ProductValue> => {
   const request = {
     protocol: PRODUCT_PROTOCOL,
     id: randomUUID(),
@@ -61,8 +61,8 @@ export async function callProduct(
     'Product request too large',
   );
   return observation(request, request.id);
-}
-export async function readProductSource(module: string): Promise<string> {
+};
+export const readProductSource = async (module: string): Promise<string> => {
   productPath(module);
   const id = randomUUID();
   const value = await observation(
@@ -75,4 +75,4 @@ export async function readProductSource(module: string): Promise<string> {
     'Expected product source bytes',
   );
   return value;
-}
+};

@@ -428,7 +428,7 @@ test('Trust boundary B/H: shared-assert attack gets no PASS receipt/seal; old me
     const original = passed.receipts.find(
       (r) => r.checkId === p.checks[0]!.id,
     )!;
-    async function historical(patch: Partial<EvidenceReceipt>) {
+    const historical = async (patch: Partial<EvidenceReceipt>) => {
       const { signature: _signature, ...unsigned } = {
         ...original,
         ...patch,
@@ -448,10 +448,11 @@ test('Trust boundary B/H: shared-assert attack gets no PASS receipt/seal; old me
         ],
         { id: randomUUID(), topic: 'historical-fixture', payload: {} },
       );
-      return passed.receipts.map((r) =>
-        r.checkId === receipt.checkId ? receipt : r,
-      );
-    }
+      return passed.receipts.map((r) => {
+        if (r.checkId === receipt.checkId) return receipt;
+        return r;
+      });
+    };
     const { readFile } = await import('node:fs/promises');
     const spec = p.checks[0]!;
     const bytes = await readFile(join(p.checkRoot, spec.files[0]!));

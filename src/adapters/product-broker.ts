@@ -19,7 +19,7 @@ import {
   type ProductRequest,
 } from './product-protocol.js';
 
-export async function removeCheckContainer(name: string): Promise<void> {
+export const removeCheckContainer = async (name: string): Promise<void> => {
   try {
     const removed = await runProcess('docker', ['rm', '--force', name], {
       timeoutMs: CALL_TIMEOUT_MS,
@@ -42,15 +42,15 @@ export async function removeCheckContainer(name: string): Promise<void> {
       `Check container stop unconfirmed: ${name}`,
     );
   }
-}
+};
 
-async function invoke(
+const invoke = async (
   request: ProductRequest,
   workspace: string,
   runtime: string,
   image: string | null,
   signal: AbortSignal,
-) {
+) => {
   ensure(!signal.aborted, 'cancelled', 'Product call cancelled');
   const options = {
     input: JSON.stringify(request),
@@ -136,22 +136,22 @@ async function invoke(
     'product-exit',
     'Product worker exited abnormally',
   );
-  const response = productResponse(
-    productBytes(image ? output.stdoutBytes : output.responseBytes),
-    request.id,
-  );
+  let bytes: Buffer;
+  if (image) bytes = output.stdoutBytes;
+  else bytes = output.responseBytes;
+  const response = productResponse(productBytes(bytes), request.id);
   ensure(response.ok, 'product-error', 'Product import/call/value failed');
   return response;
-}
+};
 
-export async function productBroker(
+export const productBroker = async (
   root: string,
   workspace: string,
   runtime: string,
   tree: Tree,
   image: string | null,
   signal: AbortSignal,
-) {
+) => {
   const socketPath = join(root, 'p.sock');
   const controller = new AbortController();
   const callSignal = AbortSignal.any([signal, controller.signal]);
@@ -163,9 +163,10 @@ export async function productBroker(
     if (
       !failure ||
       (error instanceof FactoryError && error.code === 'uncertain')
-    )
-      failure =
-        error instanceof Error ? error : new Error('Product broker failed');
+    ) {
+      if (error instanceof Error) failure = error;
+      else failure = new Error('Product broker failed');
+    }
   };
   const server = createServer({ allowHalfOpen: true }, (socket) => {
     if (sockets.size >= MAX_CALLS) {
@@ -299,4 +300,4 @@ export async function productBroker(
       await queue;
     },
   };
-}
+};

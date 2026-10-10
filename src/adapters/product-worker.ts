@@ -63,8 +63,9 @@ try {
     protocol: PRODUCT_PROTOCOL,
     id: request.id,
     ok: false,
-    error: error instanceof Error ? error.message : 'Product execution failed',
+    error: 'Product execution failed',
   };
+  if (error instanceof Error) response.error = error.message;
 }
 const encoded = JSON.stringify(response);
 ensure(

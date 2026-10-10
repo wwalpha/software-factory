@@ -9,7 +9,7 @@ export interface ProcessResult {
   stopped: boolean;
   responseBytes: Buffer;
 }
-export function runProcess(
+export const runProcess = (
   command: string,
   args: string[],
   options: {
@@ -21,17 +21,20 @@ export function runProcess(
     input?: string;
     responsePipe?: boolean;
   } = {},
-): Promise<ProcessResult> {
+): Promise<ProcessResult> => {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const spawnOptions = {
       cwd: options.cwd,
       env: options.env ?? {
         PATH: process.env.PATH ?? '/usr/bin:/bin',
         LANG: 'C.UTF-8',
       },
-      stdio: options.responsePipe ? ['pipe', 'pipe', 'pipe', 'pipe'] : 'pipe',
       detached: true,
-    });
+    };
+    let stdio: 'pipe' | ['pipe', 'pipe', 'pipe', 'pipe'];
+    if (options.responsePipe) stdio = ['pipe', 'pipe', 'pipe', 'pipe'];
+    else stdio = 'pipe';
+    const child = spawn(command, args, { ...spawnOptions, stdio });
     let stdout = '',
       stderr = '',
       bytes = 0,
@@ -39,7 +42,7 @@ export function runProcess(
       failure: Error | undefined;
     const chunks: Buffer[] = [];
     const responses: Buffer[] = [];
-    function stop(reason: Error) {
+    const stop = (reason: Error) => {
       failure ??= reason;
       if (stopping) return;
       stopping = true;
@@ -54,7 +57,7 @@ export function runProcess(
             );
         }
       }
-    }
+    };
     const aborted = () =>
       stop(new FactoryError('cancelled', 'Process cancelled'));
     options.signal?.addEventListener('abort', aborted, { once: true });
@@ -106,4 +109,4 @@ export function runProcess(
     child.stdin.end(options.input);
     if (options.signal?.aborted) aborted();
   });
-}
+};

@@ -25,15 +25,15 @@ ensure(
   'Actual Docker and pinned image required',
 );
 const checks = new ProtectedChecks(image);
-function tree(source: string, module = 'range.ts'): Tree {
+const tree = (source: string, module = 'range.ts'): Tree => {
   return {
     [module]: {
       content: Buffer.from(source).toString('base64'),
       executable: false,
     },
   };
-}
-async function registered(base: ProjectProfile, source: string) {
+};
+const registered = async (base: ProjectProfile, source: string) => {
   await writeFile(join(base.checkRoot, 'docker.test.mjs'), source);
   const spec = {
     id: 'docker-probe',
@@ -44,8 +44,8 @@ async function registered(base: ProjectProfile, source: string) {
     ...base,
     checks: [{ ...spec, version: await checkVersion(base.checkRoot, spec) }],
   };
-}
-async function noProducts() {
+};
+const noProducts = async () => {
   const remaining = await runProcess('docker', [
     'ps',
     '--all',
@@ -59,8 +59,8 @@ async function noProducts() {
     '',
     'All product containers must be removed',
   );
-}
-async function runningProduct() {
+};
+const runningProduct = async () => {
   for (let n = 0; n < 100; n++) {
     const listing = await runProcess('docker', [
       'ps',
@@ -77,7 +77,7 @@ async function runningProduct() {
     await delay(25);
   }
   throw Error('Product container never became running');
-}
+};
 
 test('Docker A/B/C/I: repair/refactor acceptance survives real container isolation and mutations cannot fake PASS', async () => {
   const f = await fixture();
