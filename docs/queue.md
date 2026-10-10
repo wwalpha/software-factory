@@ -37,8 +37,10 @@ There is no queue daemon. The parent's exit does not end the Worker.
 
 The existing PoC's stdio client is shared. The Worker uses `initialize/initialized`,
 `project/list`, **thread/start**, `thread/name/set`, and **turn/start**. It never uses
-resume/fork or copies prior conversation. The prompt is the only user input and
-is not rewritten. Fresh task assignment instructions contain only this worktree's
+resume/fork or copies prior conversation. The saved prompt text is not rewritten. When it begins with `$queue`, an explicit
+`skill` input loads the maintained Queue instructions alongside that text, as
+recommended by the [App Server documentation](https://learn.chatgpt.com/docs/app-server).
+The remaining invocation text is queued data, including read-only/no-task wording. Fresh task assignment instructions contain only this worktree's
 lifecycle, not predecessor context. Registered primary project identity, independent
 history, saved prompt and completed turn are independently checked using thread/read;
 thread/list confirms persisted project discovery. These checks leave GUI `UNVERIFIED`.
@@ -125,3 +127,13 @@ not PASS. Do not use programmatic navigation as evidence of automatic sidebar re
   these offline results do not establish those outcomes.
 - Computer Use refused access to Codex (`com.openai.codex`) under its safety policy.
   Native `/queue` recognition and GUI visibility/interaction remain UNVERIFIED.
+
+### Device invocation correction
+
+The first E2E starter and B completed Cleanup, but B interpreted the `$queue`
+payload's read-only/no-task wording as a current instruction and did not register C.
+That run is FAIL for chaining; its original item was not replayed. The normal
+`skills/list` API independently discovered the enabled repository Queue skill.
+An explicit Skill input plus instructions defining the invocation payload as data
+now accompanies the unchanged text. The E2E checker stops immediately if B finishes
+without registering C, rather than waiting out its deadline.

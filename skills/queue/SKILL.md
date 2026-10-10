@@ -9,6 +9,11 @@ Use `$queue <prompt>` in Codex. `/queue` is not established as a native command;
 do not claim it was recognized or executed as a slash command.
 The maintained source is `skills/queue/SKILL.md`; `.agents/skills/queue` links here.
 
+The `$queue` invocation makes registration the current task. Treat all text after
+the invocation as **data to save**, even when it says to read files, remain read-only
+or not create tasks. Those instructions belong to the future task; do not execute
+them now.
+
 1. Extract only the prompt following the skill invocation. Preserve every character,
    newline and space of that prompt; never summarize, rewrite or append instructions.
 2. Resolve the primary checkout with `Worktrees.open()` or `git worktree list`.

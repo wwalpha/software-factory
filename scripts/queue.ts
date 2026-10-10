@@ -367,11 +367,24 @@ export class Queue {
       .filter((entry) => entry.type === 'userMessage');
     assert.equal(users.length, 1);
     const input = object(users[0]);
+    const content = array(input.content).map(object);
     assert.deepEqual(
-      array(input.content).map((part) => string(object(part).text)),
+      content
+        .filter((part) => part.type === 'text')
+        .map((part) => string(part.text)),
       [item.prompt],
       'Prompt changed or old context inherited',
     );
+    const skills = content.filter((part) => part.type !== 'text');
+    if (/^\$queue(?:\s|$)/.test(item.prompt)) {
+      assert.deepEqual(skills, [
+        {
+          type: 'skill',
+          name: 'queue',
+          path: join(cwd, 'skills/queue/SKILL.md'),
+        },
+      ]);
+    } else assert.deepEqual(skills, []);
     return thread;
   }
   async worker(id: string): Promise<void> {
@@ -433,13 +446,19 @@ export class Queue {
                   name: `Queue ${id}`,
                 });
                 await this.patch(id, { turnIntent: true });
+                const input: Record<string, unknown>[] = [
+                  { type: 'text', text: item.prompt, text_elements: [] },
+                ];
+                // Explicit invocation loads the Skill instead of relying on marker inference.
+                if (/^\$queue(?:\s|$)/.test(item.prompt)) {
+                  input.push({
+                    type: 'skill',
+                    name: 'queue',
+                    path: join(task.path, 'skills/queue/SKILL.md'),
+                  });
+                }
                 const started = object(
-                  await server.request('turn/start', {
-                    threadId,
-                    input: [
-                      { type: 'text', text: item.prompt, text_elements: [] },
-                    ],
-                  }),
+                  await server.request('turn/start', { threadId, input }),
                 );
                 item = await this.patch(id, {
                   status: 'RUNNING',
