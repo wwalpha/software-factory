@@ -3,7 +3,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync, realpathSync } from 'node:fs';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import {
+  mkdtemp,
+  mkdir,
+  writeFile,
+  readFile,
+  readdir,
+  rm,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -139,22 +146,11 @@ readline.createInterface({input:process.stdin}).on('line',async line=>{
     return manager.run('complete', id);
   };
   const close = async () => {
-    if (existsSync(join(root, 'processes'))) {
-      for (const line of (await readFile(join(root, 'processes'), 'utf8'))
-        .trim()
-        .split('\n')) {
-        for (const pid of JSON.parse(line) as number[]) {
-          try {
-            process.kill(-pid, 'SIGKILL');
-          } catch (error) {
-            if (!(
-              error instanceof Error &&
-              'code' in error &&
-              error.code === 'ESRCH'
-            ))
-              throw error;
-          }
-        }
+    // Use current lock ownership; historical PIDs can already belong to other processes.
+    if (existsSync(manager.root)) {
+      for (const name of await readdir(manager.root)) {
+        if (/^q-[0-9]+\.worker\.lock$/.test(name))
+          await manager.withLock(name, true, async () => undefined, 30000);
       }
     }
     await rm(root, { recursive: true, force: true });

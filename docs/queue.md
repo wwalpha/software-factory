@@ -165,3 +165,10 @@ receipts from the saved session log. Static lifecycle developer instructions cla
 that invocation payload is future-task data. No predecessor log or summary is passed
 to a new task. The corrected device run above establishes chaining; earlier failures
 remain recorded and are not reported as passes.
+
+One final validation stopped before integration with `kill EPERM` in the Mock
+fixture's teardown, after all four T08 items had reached DONE with distinct thread
+IDs. Teardown previously signaled historical process-group IDs. It now waits/reclaims
+only the current owned worker locks through the existing helper, avoiding signals
+to exited or recycled PIDs. Validation is rerun on the corrected committed tree;
+the failed run is retained and is not counted as a pass.
