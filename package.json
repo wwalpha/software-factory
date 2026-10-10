@@ -26,7 +26,9 @@
     "test:live": "npm run build && node dist/scripts/live.js",
     "check": "npm run schema:check && npm run typecheck && npm run lint && npm run format:check && npm test",
     "worktree": "node dist/scripts/worktree.js",
-    "test:worktree": "npm run build && node --test dist/tests/worktree.integration.test.js"
+    "test:worktree": "npm run build && node --test dist/tests/worktree.integration.test.js",
+    "queue": "node dist/scripts/queue.js",
+    "test:queue": "npm run build && node --test dist/tests/queue.integration.test.js"
   },
   "dependencies": {
     "@openai/codex": "0.162.0",
