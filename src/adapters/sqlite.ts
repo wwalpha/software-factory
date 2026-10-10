@@ -7,6 +7,7 @@ import type {
   Write,
   Event,
   AttemptAdmission,
+  CommitBudget,
 } from '../ports/store.js';
 import { ensure, FactoryError } from '../domain/invariants.js';
 export class SqliteStore implements PersistencePort {
@@ -77,16 +78,25 @@ export class SqliteStore implements PersistencePort {
     writes: Write[],
     event: Event,
     admission?: AttemptAdmission,
+    budget?: CommitBudget,
   ): Promise<{ duplicate: boolean }> {
-    return this.request({ op: 'commit', writes, event, admission });
+    return this.request({ op: 'commit', writes, event, admission, budget });
   }
   async faultCommit(
     writes: Write[],
     event: Event,
     fault: 'before' | 'after',
     admission?: AttemptAdmission,
+    budget?: CommitBudget,
   ): Promise<void> {
-    await this.request({ op: 'commit', writes, event, fault, admission });
+    await this.request({
+      op: 'commit',
+      writes,
+      event,
+      fault,
+      admission,
+      budget,
+    });
   }
   async pending(): Promise<Event[]> {
     return (

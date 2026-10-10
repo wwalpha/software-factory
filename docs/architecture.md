@@ -67,6 +67,24 @@ Guard intent/result records before recovery. A duplicate Guard intent commit can
 start a second Runner. Older revision attempts remain charged but are not replayed
 as work for a new revision. See [P1-A validation](validation-p1-a.md).
 
+Planned non-Builder WorkItems use a Runtime-owned `role-execution` record keyed by
+mission revision, plan revision, item and role. Each provider call has its own
+reservation ID and input/snapshot digest. Call intent and reservation commit
+together; response/usage and settlement commit together; the final RoleReport and
+WorkItem completion commit together. Saved responses can be reused after a crash.
+A call without a durable outcome becomes uncertain and retains its reservation
+charge. This does not guarantee exactly-once execution at the external provider.
+
+Only explicit resume makes classified retryable role failures runnable. Each send
+rechecks existing Guard snapshot authority and the mission money/time bounds.
+Permanent failures, approval holds and unknown outcomes require human inspection
+and the existing mission revision/operator grant path. Cancelled missions remain
+terminal. The journal is internal persisted state, not model-authored authority;
+it neither consumes Builder Attempts nor forwards reports to other roles/plans.
+New plans carry an optional roleJournalVersion. Never-started legacy ready states
+can adopt it; missing histories in previously active legacy work wait for human
+resolution instead of being replayed. See [P1-B validation](validation-p1-b.md).
+
 Before a Guard effect, its operation identity, request digest and budget
 reservation are durable. A completed identical request returns its prior result.
 A pending operation after a crash becomes uncertain, not automatically rerun.

@@ -99,6 +99,13 @@ fallback. A missing grant, exhausted budget, expired authentication or uncertain
 operation becomes waiting with a reason, owner and resume condition. Independent
 work can continue around a blocked item.
 
+For planned non-Builder work, explicit `resume` retries only classified retryable
+failures after the existing authorization and budget checks. Ordinary `run` and
+startup recovery do not automatically retry those failures. Saved RoleReports are
+reused. Unknown outcomes and missing legacy histories require inspection, a human
+mission revision and its matching operator grant; `authorize-retry` below remains
+a Builder operation command. See [P1-B behavior and validation](docs/validation-p1-b.md).
+
 After a crash, the daemon reconciles running missions against Guard records.
 Heartbeat expiry alone cannot replace a worker. An uncertain isolated build
 requires confirmed stop and a separate operator action before a fresh Attempt:
